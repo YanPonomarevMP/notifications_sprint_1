@@ -1,0 +1,32 @@
+# Модуль содержит тесты для события push.
+name: push event
+
+on:
+    push:
+        branches: [ main, master ]  # У всех разные главные ветки. Кто-то консервативен и использует master :)
+
+jobs:
+    linter:
+        runs-on: ubuntu-latest
+        strategy:
+            matrix:
+                python-version: [ '3.7', '3.8', '3.9' ]
+        name: linters with python ${{ matrix.python-version }}  # Удобно же видеть какая сейчас версия.
+        steps:
+            -   uses: actions/checkout@v2
+            -   name: Install Python
+                uses: actions/setup-python@v2
+                with:
+                    python-version: ${{ matrix.python-version }}
+            -   name: Install dependencies
+                run: |
+                    python -m pip install --upgrade pip
+                    pip install flake8==4.0.1 wemake-python-styleguide==0.16.1 \
+                    mypy==0.950 flake8-bandit==2.1.2 bandit==1.7.2 types-redis==4.1.19 \
+                    types-requests==2.27.29 lxml==4.9.1
+
+            -   name: Flake8
+                run: flake8 .
+
+            -   name: Mypy
+                run: mypy .
