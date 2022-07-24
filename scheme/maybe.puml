@@ -1,0 +1,89 @@
+@startuml
+
+<style>
+    package {
+        backgroundcolor #CCC
+        Shadowing 1
+    }
+    document {
+        backgroundcolor #949494
+    }
+    frame {
+        backgroundcolor #EEE
+    }
+    database {
+        backgroundcolor #A5CEF0
+    }
+    queue {
+        backgroundcolor #F78F8F
+    }
+    actor {
+        linethickness 3
+        linecolor #2B2B2B
+    }
+    arrow {
+        linethickness 2
+        linecolor #2B2B2B
+    }
+    folder {
+        backgroundcolor #FFCD73
+    }
+</style>
+
+package "notifier" {
+    frame notifier_api as "API" {
+    }
+    frame notifier_formatter as "formatter" {
+    }
+    frame notifier_email_handler as "email_handler" {
+    }
+    database notifier_postgres as "notifications" {
+    }
+    database notifier_cache as "redis cache" {
+    }
+    queue notifier_queue as "rabbit" {
+    }
+}
+
+package events as "app events" {
+    frame events_api as "API" {
+    }
+    queue events_kafka as "kafka" {
+    }
+    frame notifier_to_events_consumer as "consumer" {
+    }
+}
+
+package "auth" {
+    frame auth_api as "API" {
+    }
+}
+
+package "frontend" {
+    frame frontend_app as "any JS app" {
+    }
+}
+
+actor notifier_user as "manager"
+
+events_kafka --> notifier_to_events_consumer
+notifier_to_events_consumer --> notifier_api
+
+notifier_user -right-> frontend_app
+frontend_app ---> notifier_api
+frontend_app -right-> events_api
+events_api <-right-> events_kafka
+
+notifier_api --> notifier_postgres
+notifier_api ---> notifier_queue
+
+notifier_formatter <--> notifier_queue
+notifier_email_handler <--> notifier_queue
+
+notifier_formatter <-down-> notifier_cache
+notifier_cache <-down-> auth_api
+notifier_formatter -> notifier_postgres
+
+'note right of notifier_formatter : aaa
+
+@enduml
