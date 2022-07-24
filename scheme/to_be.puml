@@ -1,0 +1,127 @@
+@startuml
+'https://plantuml.com/component-diagram
+<style>
+    package {
+        backgroundcolor #CCC
+        Shadowing 1
+    }
+    document {
+        backgroundcolor #949494
+    }
+    frame {
+        backgroundcolor #EEE
+    }
+    database {
+        backgroundcolor #A5CEF0
+    }
+    actor {
+        linethickness 3
+        linecolor #2B2B2B
+    }
+    arrow {
+        linethickness 2
+        linecolor #2B2B2B
+    }
+    folder {
+        backgroundcolor #FFCD73
+    }
+</style>
+
+package "Admin panel" {
+    frame admin_panel_nginx as "nginx"{
+        folder static
+        port admin_panel_nginx_port_80 as "80"
+    }
+    frame admin_panel_django as "Django Admin" {
+        port admin_panel_django_port_8000 as "8000"
+    }
+    database admin_panel_postgres as "movies\npostgres" {
+        port admin_panel_postgres_port_5432 as "5432"
+    }
+}
+
+
+package "Async API" {
+    frame async_api_nginx as "nginx"{
+        port async_api_nginx_port_80 as "80"
+    }
+    frame async_api_fast_api as "application FastAPI" {
+        port async_api_fast_api_port_8000 as "8000"
+    }
+    database async_api_elastic as "elastic" {
+        port async_api_elastic_port_9200 as "9200"
+    }
+    database async_api_redis as "redis" {
+        port async_api_redis_port_6379 as "6379"
+    }
+}
+
+
+package "Auth API" {
+    frame auth_api_nginx as "nginx" {
+        port auth_api_nginx_port_80 as "80"
+    }
+    frame auth_api_flask as "application Flask" {
+        port auth_api_flask_port_5000 as "5000"
+    }
+    database auth_api_postgres as "users\npostgres" {
+        port auth_api_postgres_port_5432 as "5432"
+    }
+    database auth_api_redis as "redis" {
+        port auth_api_redis_port_6379 as "6379"
+    }
+    frame auth_api_vault as "vault" {
+        port auth_api_vault_port_8200 as "8200"
+    }
+}
+
+package "UGC" #7FC986{
+    frame ugc_nginx as "nginx" {
+        port ugc_nginx_port_80 as "80"
+    }
+    frame ugc_fast_api as "application FastAPI" {
+        port ugc_fast_api_port_8000 as "8000"
+    }
+    database ugc_analytical_db as "analytical db"{
+        port ugc_analytical_db_port as "..."
+    }
+    database ugc_event_store_db as "event store db" {
+        port ugc_event_store_db_port as "..."
+    }
+    rectangle ugc_etl as "ETL"
+}
+
+rectangle admin_panel_etl as "ETL"
+actor admin_panel_user as "manager"
+actor common_user as "client"
+actor ugc_user as "analyst"
+
+
+admin_panel_user <--> admin_panel_nginx_port_80
+admin_panel_nginx <-> admin_panel_django_port_8000
+admin_panel_django -left-> admin_panel_postgres_port_5432
+admin_panel_django --> static
+
+admin_panel_postgres --right-> admin_panel_etl
+admin_panel_etl --right-> async_api_elastic
+
+common_user <--> async_api_nginx_port_80
+async_api_nginx <--> async_api_fast_api_port_8000
+async_api_fast_api <--> async_api_redis_port_6379
+async_api_fast_api <--> async_api_elastic_port_9200
+
+
+async_api_fast_api --> auth_api_nginx_port_80
+auth_api_nginx <--> auth_api_flask_port_5000
+auth_api_flask --> auth_api_postgres_port_5432
+auth_api_flask <--> auth_api_redis_port_6379
+auth_api_flask <-left-> auth_api_vault_port_8200
+common_user <--> auth_api_nginx_port_80
+
+async_api_fast_api ---> ugc_nginx_port_80
+ugc_user <--> ugc_nginx_port_80
+ugc_nginx <--> ugc_fast_api_port_8000
+ugc_fast_api <--> ugc_analytical_db_port
+ugc_event_store_db --> ugc_etl
+ugc_etl --> ugc_analytical_db
+@enduml
