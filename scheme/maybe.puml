@@ -46,7 +46,11 @@ package "notifier" {
 }
 
 package events as "app events" {
+    frame events_api as "API" {
+    }
     queue events_kafka as "kafka" {
+    }
+    frame notifier_to_events_consumer as "consumer" {
     }
 }
 
@@ -60,15 +64,15 @@ package "frontend" {
     }
 }
 
-rectangle notifier_to_events_consumer as "standalone\n consumer"
 actor notifier_user as "manager"
 
 events_kafka --> notifier_to_events_consumer
 notifier_to_events_consumer --> notifier_api
 
 notifier_user -right-> frontend_app
-frontend_app --> notifier_api
-frontend_app -right-> events_kafka
+frontend_app ---> notifier_api
+frontend_app -right-> events_api
+events_api <-right-> events_kafka
 
 notifier_api --> notifier_postgres
 notifier_api ---> notifier_queue
@@ -80,5 +84,6 @@ notifier_formatter <-down-> notifier_cache
 notifier_cache <-down-> auth_api
 notifier_formatter -> notifier_postgres
 
+'note right of notifier_formatter : aaa
 
 @enduml
