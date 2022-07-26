@@ -33,7 +33,7 @@
 package "notifier" {
     frame notifier_api as "API" {
     }
-    frame notifier_formatter as "formatter" {
+    frame notifier_formatter as "email_formatter" {
     }
     frame notifier_email_handler as "email_handler" {
     }
@@ -74,15 +74,16 @@ frontend_app ---> notifier_api
 frontend_app -right-> events_api
 events_api <-right-> events_kafka
 
-notifier_api --> notifier_postgres
-notifier_api ---> notifier_queue
+notifier_api -right-> notifier_postgres
+notifier_api -right-> notifier_queue
 
-notifier_formatter <--> notifier_queue
-notifier_email_handler <--> notifier_queue
+notifier_formatter <-up-> notifier_queue
+notifier_email_handler <-up-> notifier_queue
 
 notifier_formatter <-down-> notifier_cache
 notifier_cache <-down-> auth_api
-notifier_formatter -> notifier_postgres
+notifier_formatter -right-> notifier_postgres
+notifier_email_handler --> notifier_postgres
 
 'note right of notifier_formatter : aaa
 
