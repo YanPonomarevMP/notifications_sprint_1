@@ -1,0 +1,21 @@
+services:
+
+    database:
+        build:
+            context: ./postgres
+        container_name: notifications_db
+        expose:
+            - 5432
+        env_file:
+            - postgres/.env
+        volumes:
+            - notifications_db_data:/var/lib/postgresql/data
+#        depends_on:
+#            - vault
+
+volumes:
+    notifications_db_data:
+#    vault_data:
+#    vault_logs:
+#    redis_data:
+#    auth_api_data:
