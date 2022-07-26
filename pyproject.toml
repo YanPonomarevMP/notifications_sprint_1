@@ -18,6 +18,7 @@ opentelemetry-instrumentation-fastapi = "0.30b1"
 opentelemetry-exporter-jaeger = "^1.11.1"
 pytest = "7.1.2"
 pytest-asyncio = "0.18.3"
+Jinja2 = "^3.1.2"
 
 [tool.poetry.dev-dependencies]
 flake8 = "^4.0.1"
