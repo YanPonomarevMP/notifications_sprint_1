@@ -10,12 +10,65 @@ services:
             - postgres/.env
         volumes:
             - notifications_db_data:/var/lib/postgresql/data
+        depends_on:
+            - vault
+
+    vault:
+        build:
+            context: ./vault
+        container_name: notifications_vault
+        command: server
+            -config=/vault/config/vault-config.hcl
+        cap_add:
+            - IPC_LOCK
+        env_file:
+            - vault/.env_vault
+        expose:
+            - 8200
+        volumes:
+            - vault_data:/vault/file
+            - vault_logs:/vault/logs
+
+    redis:
+        image: redis:6.2.6
+        container_name: notifications_redis
+        volumes:
+            - redis_data:/data
+            - ./redis/redis.conf:/usr/local/etc/redis/redis.conf
+        expose:
+            - 6379
+        command: redis-server /usr/local/etc/redis/redis.conf
+        depends_on:
+            - vault
+
+    nginx:
+        image: nginx:1.19.2
+        container_name: notifications_nginx
+        volumes:
+            - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+            - ./nginx/site.conf:/etc/nginx/conf.d/site.conf:ro
+            - /tmp/logs/nginx/:/var/log/nginx/
 #        depends_on:
-#            - vault
+#            - ugc_api
+        ports:
+            - 80:80
+        restart: always
+
+    rabbit_mq:
+        container_name: notifications_rabbit
+        image: rabbitmq:3.10-management
+        expose:
+            - 5672
+        ports:
+            - 5672:5672
+            - 15672:15672
+        volumes:
+            - rabbit_data:/var/lib/rabbitmq
 
 volumes:
     notifications_db_data:
-#    vault_data:
-#    vault_logs:
-#    redis_data:
+    vault_data:
+    vault_logs:
+    redis_data:
+    rabbit_data:
 #    auth_api_data:

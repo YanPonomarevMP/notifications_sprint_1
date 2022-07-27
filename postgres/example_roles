@@ -1,4 +1,0 @@
-# Создать в postgres роли с правами для использования в vault credentials:
-CREATE ROLE vault_manger WITH LOGIN CREATEROLE PASSWORD 'Kju-658?';
-CREATE ROLE users_access NOINHERIT;
-GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO "users_access";
