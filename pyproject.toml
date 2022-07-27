@@ -18,6 +18,10 @@ opentelemetry-instrumentation-fastapi = "0.30b1"
 opentelemetry-exporter-jaeger = "^1.11.1"
 pytest = "7.1.2"
 pytest-asyncio = "0.18.3"
+Jinja2 = "^3.1.2"
+SQLAlchemy = {extras = ["mypy"], version = "^1.4.36"}
+alembic = "^1.7.7"
+psycopg2-binary = "^2.9.3"
 
 [tool.poetry.dev-dependencies]
 flake8 = "^4.0.1"
