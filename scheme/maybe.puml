@@ -35,7 +35,9 @@ package "notifier" {
     }
     frame notifier_formatter as "email_formatter" {
     }
-    frame notifier_email_handler as "email_handler" {
+    frame notifier_email_sender as "email_sender" {
+    }
+    frame notifier_group_handler as "group_handler" {
     }
     database notifier_postgres as "notifications" {
     }
@@ -78,12 +80,16 @@ notifier_api -right-> notifier_postgres
 notifier_api -right-> notifier_queue
 
 notifier_formatter <-up-> notifier_queue
-notifier_email_handler <-up-> notifier_queue
+notifier_email_sender <-up-> notifier_queue
 
 notifier_formatter <-down-> notifier_cache
-notifier_cache <-down-> auth_api
-notifier_formatter -right-> notifier_postgres
-notifier_email_handler --> notifier_postgres
+notifier_cache <--> auth_api
+notifier_formatter <-right-> notifier_postgres
+notifier_email_sender <--> notifier_postgres
+
+notifier_group_handler <-down-> notifier_cache
+notifier_group_handler <-up-> notifier_queue
+notifier_group_handler <-down-> notifier_postgres
 
 'note right of notifier_formatter : aaa
 
