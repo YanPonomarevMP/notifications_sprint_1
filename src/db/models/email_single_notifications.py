@@ -20,6 +20,7 @@ single_emails = Table(
     Column('created_at', DateTime(timezone=True), default=func.now()),
     Column('updated_at', DateTime(timezone=True), onupdate=func.now()),
     Column('deleted_at', DateTime(timezone=True)),
+    Column('passed_to_handler_at', DateTime(timezone=True)),
     Column('sent_at', DateTime(timezone=True)),
     Column('sent_result', String),
     schema='email'
