@@ -24,6 +24,7 @@ flake8 = "^4.0.1"
 mypy = "^0.950"
 wemake-python-styleguide = "^0.16.1"
 types-requests = "^2.27.29"
+pika = "^1.3.0"
 
 
 [build-system]

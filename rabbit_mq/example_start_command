@@ -1,0 +1,2 @@
+cd rabbit_mq
+docker-compose --project-name rabbit_mq up -d
