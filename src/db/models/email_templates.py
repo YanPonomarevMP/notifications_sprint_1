@@ -8,12 +8,12 @@ from sqlalchemy.dialects.postgresql import UUID
 
 from db.db_init import Base
 
-templates = Table(
-    'templates',
-    Base.metadata,
-    Column('id', UUID(as_uuid=True), primary_key=True, default=uuid4, unique=True, nullable=False),
-    Column('template', Text, nullable=False),
-    Column('created_at', DateTime(timezone=True), default=func.now()),
-    Column('updated_at', DateTime(timezone=True), onupdate=func.now()),
-    schema='email'
-)
+
+class HTMLTemplates(Base):
+    __tablename__ = 'html_templates'
+    __table_args__ = {'schema': 'email'}
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4, unique=True, nullable=False)
+    template = Column(Text, nullable=False),
+    created_at = Column(DateTime(timezone=True), default=func.now())
+    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
