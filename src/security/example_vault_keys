@@ -1,0 +1,7 @@
+# Создаём в kv secret engine версии v1 путь с именем приложения (здесь имя notifications)
+vault secrets enable -path=notifications kv
+
+# Создаём все необходимые приложению ключи
+
+vault kv put notifications/rabbit_host value=localhost
+vault kv put notifications/rabbit_port value=5672
