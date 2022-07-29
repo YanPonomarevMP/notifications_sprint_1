@@ -8,20 +8,20 @@ from sqlalchemy.dialects.postgresql import UUID, JSON
 
 from db.db_init import Base
 
-single_emails = Table(
-    'single_emails',
-    Base.metadata,
-    Column('id', UUID(as_uuid=True), primary_key=True, default=uuid4, unique=True, nullable=False),
-    Column('destination_id', UUID(as_uuid=True), nullable=False),
-    Column('template_id', UUID(as_uuid=True), nullable=False),
-    Column('group_id', UUID(as_uuid=True)),
-    Column('message', JSON, nullable=False),
-    Column('delay', Integer, default=0, nullable=False),
-    Column('created_at', DateTime(timezone=True), default=func.now()),
-    Column('updated_at', DateTime(timezone=True), onupdate=func.now()),
-    Column('deleted_at', DateTime(timezone=True)),
-    Column('passed_to_handler_at', DateTime(timezone=True)),
-    Column('sent_at', DateTime(timezone=True)),
-    Column('sent_result', String),
-    schema='email'
-)
+
+class SingleEmails(Base):
+    __tablename__ = 'single_emails'
+    __table_args__ = {'schema': 'email'}
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4, unique=True, nullable=False)
+    destination_id = Column(UUID(as_uuid=True), nullable=False)
+    template_id = Column(UUID(as_uuid=True), nullable=False)
+    group_id = Column(UUID(as_uuid=True), index=True)
+    message = Column(JSON, nullable=False)
+    delay = Column(Integer, default=0, nullable=False)
+    created_at = Column(DateTime(timezone=True), default=func.now())
+    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+    deleted_at = Column(DateTime(timezone=True))
+    passed_to_handler_at = Column(DateTime(timezone=True))
+    sent_at = Column(DateTime(timezone=True))
+    sent_result = Column(String)

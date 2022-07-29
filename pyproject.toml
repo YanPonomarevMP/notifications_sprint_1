@@ -22,6 +22,7 @@ Jinja2 = "^3.1.2"
 SQLAlchemy = {extras = ["mypy"], version = "^1.4.36"}
 alembic = "^1.7.7"
 psycopg2-binary = "^2.9.3"
+databases = {extras = ["asyncpg"], version = "^0.6.0"}
 aio-pika = "^8.1.0"
 aioredis = "^2.0.1"
 
