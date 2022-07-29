@@ -35,11 +35,11 @@ services:
         volumes:
             - redis_data:/data
             - ./redis/redis.conf:/usr/local/etc/redis/redis.conf
-        expose:
-            - 6379
+        ports:
+            - 6379:6379
         command: redis-server /usr/local/etc/redis/redis.conf
-        depends_on:
-            - vault
+#        depends_on:
+#            - vault
 
     nginx:
         image: nginx:1.19.2
