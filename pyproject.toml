@@ -25,6 +25,7 @@ psycopg2-binary = "^2.9.3"
 databases = {extras = ["asyncpg"], version = "^0.6.0"}
 aio-pika = "^8.1.0"
 aioredis = "^2.0.1"
+hvac = "^0.11.2"
 
 [tool.poetry.dev-dependencies]
 flake8 = "^4.0.1"
