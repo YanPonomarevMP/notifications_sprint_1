@@ -1,5 +1,8 @@
 """Модуль содержит классы для асинхронной работы с БД."""
+from typing import Union
+
 import databases
+from sqlalchemy.sql import Update, Select, Insert, Delete
 
 from config.settings import config
 from db.storage.abstract_classes import AbstractDBClient
@@ -14,15 +17,22 @@ class AsyncPGClient(AbstractDBClient):
         db_name = config.pg.db_name
         self.session = databases.Database(f'postgresql://{user}:{password}@{host}/{db_name}')
 
-    async def start(self):
+    async def start(self) -> None:
         """Метод создаёт соединение с БД."""
         await self.session.connect()
 
-    async def stop(self):
+    async def stop(self) -> None:
         """Метод закрывает соединение с БД."""
         await self.session.disconnect()
 
+    async def execute(self, query: Union[Update, Select, Insert, Delete]):
+        """
+        Метод выполняет запрос в БД.
+        Args:
+            query: запрос к БД
 
-# class Storage:
-#
-#     def __init__(self, client):
+        Returns:
+
+        """
+        answer = await self.session.execute(query)
+        return answer
