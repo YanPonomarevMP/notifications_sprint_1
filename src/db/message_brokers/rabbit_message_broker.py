@@ -20,7 +20,7 @@ class RabbitMessageBroker:
         channel = await connection.channel()
         queue = await channel.declare_queue(name=queue_name, durable=True)
         iterator = queue.iterator()
-        await iterator.consume()  # Инициируем работу итератора.
+        await iterator.consume()  # Инициируем работу итератора, т.к. он нам нужен уже работающий.
         return iterator
 
     async def put(
@@ -56,17 +56,33 @@ class RabbitMessageBroker:
 message_broker_factory = RabbitMessageBroker()
 
 
-async def main():
-    await callback()
-
-
 async def callback():
-    data_from_consumer = await message_broker_factory.get('queue_simple_3')
+    data_from_consumer = await message_broker_factory.get('queue_1')
     async for message in data_from_consumer:
         print(message.body.decode(), message.info()['delivery_tag'], message.info()['redelivered'])
         await asyncio.sleep(3)
         await message.ack()
 
+
+async def create_data():
+
+    expiration = 10 * 1000
+    queue_name = 'queue_1'
+    exchange_name = 'exc_queue_1'
+
+    for i in range(1, 6):
+        message_body = f'message № {i}'
+        await message_broker_factory.put(
+            message_body=message_body.encode(),
+            expiration=expiration,
+            queue_name=queue_name,
+            exchange_name=exchange_name
+        )
+
+
+async def main():
+    await create_data()
+    await callback()
 
 if __name__ == "__main__":
     loop = asyncio.get_event_loop()
