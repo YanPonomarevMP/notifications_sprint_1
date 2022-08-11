@@ -1,4 +1,5 @@
 import asyncio
+from typing import Optional
 
 import aio_pika
 from aio_pika import Message, DeliveryMode, ExchangeType
@@ -28,12 +29,14 @@ class RabbitMessageBroker:
         message_body: bytes,
         expiration: int,
         queue_name: str,
-        exchange_name: str
+        exchange_name: str,
+        message_headers: Optional[dict] = None
     ):
         connection = await self._get_connect()
         channel = await connection.channel()
         exchange = await channel.declare_exchange(name=exchange_name, type=ExchangeType.FANOUT)
         message = Message(
+            headers=message_headers or {},
             body=message_body,
             delivery_mode=DeliveryMode.PERSISTENT,
             expiration=expiration
