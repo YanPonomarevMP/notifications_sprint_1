@@ -52,7 +52,6 @@ class RabbitMessageBroker:
             password=self.password.get_secret_value(),
             loop=asyncio.get_running_loop()
         )
-        await connection.connect()
         return connection
 
 
@@ -69,7 +68,7 @@ async def callback():
 
 async def create_data():
 
-    expiration = 10 * 1000
+    expiration = 5 * 1000  # 5 минут.
     queue_name = 'queue_1'
     exchange_name = 'exc_queue_1'
 
@@ -81,11 +80,13 @@ async def create_data():
             queue_name=queue_name,
             exchange_name=exchange_name
         )
+        print('записали', message_body)
 
 
 async def main():
     await create_data()
-    await callback()
+    # await callback()
+
 
 if __name__ == "__main__":
     loop = asyncio.get_event_loop()
