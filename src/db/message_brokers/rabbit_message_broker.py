@@ -49,8 +49,7 @@ class RabbitMessageBroker:
             host=self.host,
             port=self.port,
             login=self.login.get_secret_value(),
-            password=self.password.get_secret_value(),
-            loop=asyncio.get_running_loop()
+            password=self.password.get_secret_value()
         )
         return connection
 
@@ -85,7 +84,7 @@ async def create_data():
 
 async def main():
     await create_data()
-    # await callback()
+    await callback()
 
 
 if __name__ == "__main__":
