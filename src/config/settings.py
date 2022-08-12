@@ -22,11 +22,19 @@ class RabbitSettings(BaseSettings):
     message: MessageRabbitSettings = MessageRabbitSettings()
 
 
+class PostgresSettings(BaseSettings):
+    login: SecretStr = vault.get_secret('pg_user')  # имя поля user пересекается с переменной окружения user
+    password: SecretStr = vault.get_secret('pg_password')
+    host: str = vault.get_secret('pg_host')
+    db_name: str = vault.get_secret('pg_db_name')
+
+
 class Config(BaseSettings):
 
     """Настройки приложения."""
 
     rabbit_mq: RabbitSettings = RabbitSettings()
+    pg: PostgresSettings = PostgresSettings()
 
 
 config = Config()
