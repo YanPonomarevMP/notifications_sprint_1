@@ -5,6 +5,8 @@ vault secrets enable -path=notifications kv
 
 vault kv put notifications/rabbit_host value=localhost
 vault kv put notifications/rabbit_port value=5672
+vault kv put notifications/rabbit_login value=guest
+vault kv put notifications/rabbit_password value=guest
 
 vault kv put notifications/fast_api_host value=localhost
 vault kv put notifications/fast_api_port value=8000

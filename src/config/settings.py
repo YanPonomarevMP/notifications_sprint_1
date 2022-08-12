@@ -1,14 +1,27 @@
+"""Модуль содержит настройки приложения."""
 import os
-
 from pydantic import BaseSettings, SecretStr
 
 from config.fast_api_logging import LOGGING
 from security.vault_app_config import vault
 
 
+class MessageRabbitSettings(BaseSettings):
+
+    """Настройки сообщений для брокера."""
+
+    expiration: int = 30_000  # 30 минут. Указываем миллисекунды.
+
+
 class RabbitSettings(BaseSettings):
+
+    """Настройки RabbitMQ."""
+
     host: str = vault.get_secret('rabbit_host')
     port: int = vault.get_secret('rabbit_port')
+    login: SecretStr = vault.get_secret('rabbit_login')
+    password: SecretStr = vault.get_secret('rabbit_password')
+    message: MessageRabbitSettings = MessageRabbitSettings()
 
 
 class PostgresSettings(BaseSettings):
