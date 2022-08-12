@@ -24,7 +24,7 @@ from db.storage import orm_factory
 # from api_config.fast_api_logging import LOGGING
 # from models.request_log import RequestLog
 
-from utils import async_backoff, aiohttp_session
+from utils import aiohttp_session
 from utils.dependencies import x_request_id_required
 from utils.log import create_logger
 
