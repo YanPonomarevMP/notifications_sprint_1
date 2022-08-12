@@ -5,3 +5,21 @@ vault secrets enable -path=notifications kv
 
 vault kv put notifications/rabbit_host value=localhost
 vault kv put notifications/rabbit_port value=5672
+
+vault kv put notifications/fast_api_host value=localhost
+vault kv put notifications/fast_api_port value=8000
+vault kv put notifications/fast_api_swagger_title value=UGC
+vault kv put notifications/fast_api_swagger_description value="**Notifier API**"
+vault kv put notifications/fast_api_swagger_version value=0.1.0
+vault kv put notifications/fast_api_swagger_docs_url value=/api/openapi
+vault kv put notifications/fast_api_swagger_openapi_url value=/api/openapi.json
+
+vault kv put notifications/auth_api_host value=localhost
+vault kv put notifications/auth_api_port value=5000
+vault kv put notifications/auth_api_access_token value=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJmcmVzaCI6ZmFsc2UsImlhdCI6MTY1NTA1NzQxMiwianRpIjoiODY1MDQ1YmQtNGQ3Yy00ZjUzLTkwYTUtOTIyNjMwNzBmNjdiIiwidHlwZSI6ImFjY2VzcyIsInN1YiI6eyJpYXQiOiJTdW4sIDEyIEp1biAyMDIyIDE4OjEwOjEyIEdNVCIsInR0bCI6MzAwMDAsInVzZXJfaWQiOiIzNzYwN2FhYy01MDQ2LTRlOTQtOWJjOC0yYWIyZTdmMThmYTIiLCJ1c2VyX3JvbGVzIjpbInN1cGVybWFuIl0sInVzZXJfZmluZ2VycHJpbnQiOiJQb3N0bWFuUnVudGltZS83LjI5LjAiLCJhY2Nlc3NfdG9rZW5faWQiOiJiZGI4ZmI1Zi0wNzljLTRjY2MtOTE3Yi1kODM3NmI0MjE1NmQiLCJyZWZyZXNoX3Rva2VuX2lkIjoiOTNkMjQ5ODgtZDg1NS00MmVjLWEzY2QtNWM0OTVkZDZiNDZkIn0sIm5iZiI6MTY1NTA1NzQxMiwiZXhwIjoxNjU1MDg3NDEyfQ.U5Hjvnn2H-Tf5EJ_aF5O5GAY79vlQzjnLhCatwXz6zI
+
+vault kv put notifications/jaeger_host value=localhost
+vault kv put notifications/jaeger_port value=6831
+
+vault kv put notifications/redis_host value=localhost
+vault kv put notifications/redis_port value=6379

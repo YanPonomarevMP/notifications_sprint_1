@@ -10,7 +10,7 @@ from sqlalchemy import create_engine
 
 
 
-# config = context.config
+# api_config = context.api_config
 from db.db_init import Base
 
 user = 'app'
@@ -24,7 +24,7 @@ engine = create_engine(address, convert_unicode=True)
 # access to the values within the .ini file in use.
 config = context.config
 
-# Interpret the config file for Python logging.
+# Interpret the api_config file for Python logging.
 # This line sets up loggers basically.
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
@@ -36,9 +36,9 @@ if config.config_file_name is not None:
 from db import models
 target_metadata = Base.metadata
 
-# other values from the config, defined by the needs of env.py,
+# other values from the api_config, defined by the needs of env.py,
 # can be acquired:
-# my_important_option = config.get_main_option("my_important_option")
+# my_important_option = api_config.get_main_option("my_important_option")
 # ... etc.
 
 
