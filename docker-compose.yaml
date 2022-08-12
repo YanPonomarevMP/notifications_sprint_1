@@ -18,7 +18,7 @@ services:
             context: ./vault
         container_name: notifications_vault
         command: server
-            -config=/vault/config/vault-config.hcl
+            -api_config=/vault/api_config/vault-api_config.hcl
         cap_add:
             - IPC_LOCK
         env_file:

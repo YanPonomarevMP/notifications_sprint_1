@@ -34,5 +34,11 @@ class AsyncPGClient(AbstractDBClient):
         Returns:
 
         """
-        answer = await self.session.execute(query)
-        return answer
+        return await self.session.execute(query)
+
+
+db = AsyncPGClient()
+
+async def get_db() -> AsyncPGClient:
+    """Функция возвращает db объект."""
+    return db  # type: ignore
