@@ -25,3 +25,8 @@ vault kv put notifications/jaeger_port value=6831
 
 vault kv put notifications/redis_host value=localhost
 vault kv put notifications/redis_port value=6379
+
+vault kv put notifications/pg_user value=app
+vault kv put notifications/pg_password value=123qwe
+vault kv put notifications/pg_host value=5432
+vault kv put notifications/pg_db_name value=notifications
