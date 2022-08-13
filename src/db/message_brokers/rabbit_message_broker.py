@@ -6,7 +6,7 @@ import aio_pika
 from aio_pika import Message, DeliveryMode, ExchangeType
 from aio_pika.abc import AbstractRobustConnection, AbstractQueueIterator
 
-from config.app_settings import config
+from config.settings import config
 from db.message_brokers.abstract_classes import AbstractMessageBroker
 
 

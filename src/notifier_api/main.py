@@ -14,7 +14,7 @@ from opentelemetry.sdk.trace.export import BatchSpanProcessor  # type: ignore
 
 from api.v1.emails.main import router as v1_emails_router
 # from api_config.fast_api_logging import LOGGING
-from config.app_settings import config
+from config.settings import config
 from config.logging_settings import LOGGING
 from db.storage import orm_factory
 from utils import aiohttp_session
