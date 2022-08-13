@@ -10,7 +10,8 @@ from config.settings import config
 from db.message_brokers.abstract_classes import AbstractMessageBroker
 
 
-class RabbitMessageBroker(AbstractMessageBroker):
+# class RabbitMessageBroker(AbstractMessageBroker):
+class RabbitMessageBroker:
 
     """Класс с интерфейсом брокера сообщений RabbitMQ."""
 
@@ -21,7 +22,7 @@ class RabbitMessageBroker(AbstractMessageBroker):
         self.login = config.rabbit_mq.login
         self.password = config.rabbit_mq.password
 
-    async def get(self, queue_name: str) -> AbstractQueueIterator:
+    async def get(self, queue_name: str, callback):
         """
         Метод достаёт сообщения (возвращает итерируемый объект) из очереди с названием queue_name.
 
@@ -36,7 +37,7 @@ class RabbitMessageBroker(AbstractMessageBroker):
         queue = await channel.declare_queue(name=queue_name, durable=True)
         iterator = queue.iterator()
         await iterator.consume()  # Инициируем работу итератора, т.к. он нам нужен уже работающий.
-        return iterator
+        await callback(iterator)
 
     async def put(
         self,
@@ -57,17 +58,19 @@ class RabbitMessageBroker(AbstractMessageBroker):
             message_headers: заголовок сообщения (сюда нужно вставить x-request-id)
         """
         connection = await self._get_connect()
-        channel = await connection.channel()
-        exchange = await channel.declare_exchange(name=exchange_name, type=ExchangeType.FANOUT)
-        message = Message(
-            headers=message_headers or {},
-            body=message_body,
-            delivery_mode=DeliveryMode.PERSISTENT,
-            expiration=expiration
-        )
+        try:
+            channel = await connection.channel()
+            exchange = await channel.declare_exchange(name=exchange_name, type=ExchangeType.FANOUT)
+            message = Message(
+                headers=message_headers or {},
+                body=message_body,
+                delivery_mode=DeliveryMode.PERSISTENT,
+                expiration=expiration
+            )
 
-        await exchange.publish(message=message, routing_key=queue_name)
-        await connection.close()
+            await exchange.publish(message=message, routing_key=queue_name)
+        finally:  # Даже если метеорит упадёт на землю мы всё равно закроем соединение. :)
+            await connection.close()
 
     async def _get_connect(self) -> AbstractRobustConnection:
         """
@@ -84,7 +87,7 @@ class RabbitMessageBroker(AbstractMessageBroker):
         )
 
 
-message_broker_factory: AbstractMessageBroker = RabbitMessageBroker()
+message_broker_factory = RabbitMessageBroker()
 
 
 async def callback() -> None:
@@ -92,11 +95,29 @@ async def callback() -> None:
     Функция демонстрирует возможности класса.
     В данном случае демонстрация работы функции по выкусу и обработке данных.
     """
-    data_from_consumer = await message_broker_factory.get('queue_1')
-    async for message in data_from_consumer:
-        print('выкусили', message.body.decode())  # noqa: WPS421
-        await asyncio.sleep(3)
-        await message.ack()
+    data_from_consumer = await message_broker_factory.get('queue_1', callback_1)
+    # try:
+    #     async for message in data_from_consumer:
+    #         print('выкусили', message.body.decode())  # noqa: WPS421
+    #         await asyncio.sleep(3)
+    #         await message.ack()
+    # finally:
+    #     data_from_consumer.close()
+
+
+async def callback_1(data_from_consumer) -> None:
+    """
+    Функция демонстрирует возможности класса.
+    В данном случае демонстрация работы функции по выкусу и обработке данных.
+    """
+    # data_from_consumer = await message_broker_factory.get('queue_1')
+    try:
+        async for message in data_from_consumer:
+            print('Привет из callback_1', message.body.decode())  # noqa: WPS421
+            await asyncio.sleep(3)
+            await message.ack()
+    finally:
+        data_from_consumer.close()
 
 
 async def create_data() -> None:
