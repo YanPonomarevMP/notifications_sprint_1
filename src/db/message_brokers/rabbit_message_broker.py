@@ -67,7 +67,11 @@ class RabbitMessageBroker(AbstractMessageBroker):
         connection = await self._get_connect()
         try:
             channel = await connection.channel()
-            exchange = await channel.declare_exchange(name=exchange_name, type=ExchangeType.FANOUT)
+            exchange = await channel.declare_exchange(
+                name=exchange_name,
+                type=ExchangeType.FANOUT,
+                durable=True
+            )
             message = Message(
                 headers=message_headers or {},
                 body=message_body,
