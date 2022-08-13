@@ -1,9 +1,12 @@
 """Модуль содержит настройки приложения."""
-import os
+from logging import config as logging_config
+
 from pydantic import BaseSettings, SecretStr
 
-from config.fast_api_logging import LOGGING
+from config.logging_settings import LOGGING
 from security.vault_app_config import vault
+
+logging_config.dictConfig(LOGGING)
 
 
 class RabbitSettings(BaseSettings):
@@ -38,8 +41,6 @@ class SettingsFastAPI(BaseSettings):
 
     """Класс настроек FastAPI."""
 
-    logging: dict = LOGGING
-    base_dir: str = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     host: str = vault.get_secret('fast_api_host')
     port: int = vault.get_secret('fast_api_port')
     swagger_docs: SettingsSwaggerDocs = SettingsSwaggerDocs()
@@ -69,7 +70,6 @@ class SettingsRedis(BaseSettings):
 
     host: str = vault.get_secret('redis_host')
     port: int = vault.get_secret('redis_port')
-
 
 
 class Config(BaseSettings):

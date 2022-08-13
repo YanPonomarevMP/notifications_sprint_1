@@ -1,11 +1,12 @@
 """Модуль содержит конфигуратор приложения из HashiCorp Vault."""
+from logging import getLogger
+
 import hvac
 
 from security.abstract_classes import AbstractAppConfig
 from security.env_config import env
 from security.vault_client import client
 from utils.backoff import backoff
-from utils.log import create_logger
 
 
 class VaultAppConfig(AbstractAppConfig):
@@ -39,5 +40,5 @@ class VaultAppConfig(AbstractAppConfig):
         return response['data']['value']
 
 
-logger = create_logger(__name__)
+logger = getLogger(__name__)
 vault = VaultAppConfig(vault_client=client, app_name=env.vault_app_name)
