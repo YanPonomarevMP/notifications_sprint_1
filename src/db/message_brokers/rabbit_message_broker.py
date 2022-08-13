@@ -1,17 +1,16 @@
 """Модуль содержит класс с брокером сообщений."""
 import asyncio
-from typing import Optional, Union
+from typing import Optional, Union, Callable, AsyncIterator
 
 import aio_pika
 from aio_pika import Message, DeliveryMode, ExchangeType
-from aio_pika.abc import AbstractRobustConnection, AbstractQueueIterator
+from aio_pika.abc import AbstractRobustConnection
 
 from config.settings import config
 from db.message_brokers.abstract_classes import AbstractMessageBroker
 
 
-# class RabbitMessageBroker(AbstractMessageBroker):
-class RabbitMessageBroker:
+class RabbitMessageBroker(AbstractMessageBroker):
 
     """Класс с интерфейсом брокера сообщений RabbitMQ."""
 
@@ -22,24 +21,25 @@ class RabbitMessageBroker:
         self.login = config.rabbit_mq.login
         self.password = config.rabbit_mq.password
 
-    async def get(self, queue_name: str, callback):
+    async def consume(self, queue_name: str, callback: Callable) -> None:
         """
-        Метод достаёт сообщения (возвращает итерируемый объект) из очереди с названием queue_name.
+        Метод обрабатывает сообщения функцией callback из очереди с названием queue_name.
 
         Args:
             queue_name: название очереди, из которой хотим получить данные
-
-        Returns:
-            Вернёт асинхронный итератор.
+            callback: функция, которая будет работать с итератором `def func(iterator: AsyncIterator)`
         """
         connection = await self._get_connect()
-        channel = await connection.channel()
-        queue = await channel.declare_queue(name=queue_name, durable=True)
-        iterator = queue.iterator()
-        await iterator.consume()  # Инициируем работу итератора, т.к. он нам нужен уже работающий.
-        await callback(iterator)
+        try:
+            channel = await connection.channel()
+            queue = await channel.declare_queue(name=queue_name, durable=True)
+            iterator = queue.iterator()
+            await iterator.consume()  # Инициируем работу итератора, т.к. он нам нужен уже работающий.
+            await callback(iterator)
+        finally:  # Даже если украинские националисты будут под москвой мы всё равно закроем соединение. :)
+            await connection.close()
 
-    async def put(
+    async def publish(
         self,
         message_body: bytes,
         queue_name: str,
@@ -90,60 +90,33 @@ class RabbitMessageBroker:
 message_broker_factory = RabbitMessageBroker()
 
 
-async def callback() -> None:
+async def callback(iterator: AsyncIterator) -> None:
     """
-    Функция демонстрирует возможности класса.
-    В данном случае демонстрация работы функции по выкусу и обработке данных.
-    """
-    data_from_consumer = await message_broker_factory.get('queue_1', callback_1)
-    # try:
-    #     async for message in data_from_consumer:
-    #         print('выкусили', message.body.decode())  # noqa: WPS421
-    #         await asyncio.sleep(3)
-    #         await message.ack()
-    # finally:
-    #     data_from_consumer.close()
+    Функция демонстрирует работу обработчика сообщений из очереди.
 
+    По задумке message_broker_factory.consume будет получать на вход название очереди и функцию.
+    Эта функция и будет обрабатывать сообщения (как показано ниже в коде).
 
-async def callback_1(data_from_consumer) -> None:
-    """
-    Функция демонстрирует возможности класса.
-    В данном случае демонстрация работы функции по выкусу и обработке данных.
-    """
-    # data_from_consumer = await message_broker_factory.get('queue_1')
-    try:
-        async for message in data_from_consumer:
-            print('Привет из callback_1', message.body.decode())  # noqa: WPS421
-            await asyncio.sleep(3)
-            await message.ack()
-    finally:
-        data_from_consumer.close()
+    Если вдруг потребуются доп. аргументы (что угодно кроме iterator) — всегда можно написать замыкание. :)
 
-
-async def create_data() -> None:
+    Args:
+        iterator: итератор с сообщениями из очереди
     """
-    Функция демонстрирует возможности класса.
-    В данном случае демонстрация работы функции по вставке данных.
-    """
-    expiration = 5 * 1000  # 5 минут.
-    queue_name = 'queue_1'
-    exchange_name = 'exc_queue_1'
-
-    for i in range(1, 6):
-        message_body = f'message № {i}'
-        await message_broker_factory.put(
-            message_body=message_body.encode(),
-            expiration=expiration,
-            queue_name=queue_name,
-            exchange_name=exchange_name
-        )
-        print('записали', message_body)  # noqa: WPS421
+    async for message in iterator:
+        print(f'Привет из функции-обработчика! Содержимое сообщения: {message.body.decode()}')  # noqa: WPS421, WPS237
+        await asyncio.sleep(3)  # Любая логика
+        await message.ack()  # Обязательно проставить галочку о том, что всё ок.
 
 
 async def main() -> None:
-    """Две функции-демонстратора в одном."""
-    await create_data()
-    await callback()
+    """Функция «Quick Start»."""
+    await message_broker_factory.publish(
+        message_body='Какая-то byte строка, которую мы хотим записать'.encode(),
+        expiration=10,
+        queue_name='queue_test',
+        exchange_name='exc_queue_test'
+    )
+    await message_broker_factory.consume('queue_test', callback)
 
 
 if __name__ == '__main__':

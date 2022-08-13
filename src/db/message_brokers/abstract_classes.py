@@ -1,6 +1,6 @@
 """Модуль содержит абстрактные классы."""
 from abc import ABC, abstractmethod
-from typing import AsyncIterator, Optional, Union
+from typing import Optional, Union, Callable
 
 
 class AbstractMessageBroker(ABC):
@@ -8,20 +8,18 @@ class AbstractMessageBroker(ABC):
     """Класс с интерфейсом брокера сообщений."""
 
     @abstractmethod
-    async def get(self, queue_name: str) -> AsyncIterator:
+    async def consume(self, queue_name: str, callback: Callable) -> None:
         """
-        Метод достаёт сообщения (возвращает итерируемый объект) из очереди с названием queue_name.
+        Метод обрабатывает сообщения функцией callback из очереди с названием queue_name.
 
         Args:
             queue_name: название очереди, из которой хотим получить данные
-
-        Returns:
-            Вернёт асинхронный итератор.
+            callback: функция, которая будет работать с итератором `def func(iterator: AsyncIterator)`
         """
         pass
 
     @abstractmethod
-    async def put(
+    async def publish(
         self,
         message_body: bytes,
         queue_name: str,
