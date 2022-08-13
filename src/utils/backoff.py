@@ -1,10 +1,8 @@
 """Модуль содержит функцию backoff."""
-import sys
 from functools import wraps
+from logging import getLogger
 from time import sleep
 from typing import Union, Callable, Any
-
-from utils.log import create_logger
 
 
 def backoff(
@@ -76,4 +74,4 @@ def backoff(
     return func_wrapper
 
 
-logger = create_logger(__name__, stream_out=sys.stderr)
+logger = getLogger(__name__)

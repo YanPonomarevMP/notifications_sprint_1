@@ -1,12 +1,9 @@
 """Модуль содержит конфигурацию приложения FastAPI."""
-from time import time
-from typing import Callable
-import logging
 
 import aiohttp
 # import sentry_sdk
 import uvicorn
-from fastapi import FastAPI, Depends, Request
+from fastapi import FastAPI, Depends
 from fastapi.responses import ORJSONResponse
 from opentelemetry import trace  # type: ignore
 from opentelemetry.exporter.jaeger.thrift import JaegerExporter  # type: ignore
@@ -14,19 +11,18 @@ from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor  # type: i
 from opentelemetry.sdk.resources import Resource  # type: ignore
 from opentelemetry.sdk.trace import TracerProvider  # type: ignore
 from opentelemetry.sdk.trace.export import BatchSpanProcessor  # type: ignore
-# from sentry_sdk.integrations.asgi import SentryAsgiMiddleware
 
 from api.v1.emails.main import router as v1_emails_router
-# from config.fast_api_logging import LOGGING
 # from api_config.fast_api_logging import LOGGING
-from config.settings import config
+from config.app_settings import config
+from config.logging_settings import LOGGING
 from db.storage import orm_factory
-# from api_config.fast_api_logging import LOGGING
-# from models.request_log import RequestLog
-
 from utils import aiohttp_session
 from utils.dependencies import x_request_id_required
-from utils.log import create_logger
+
+# from sentry_sdk.integrations.asgi import SentryAsgiMiddleware
+# from api_config.fast_api_logging import LOGGING
+# from models.request_log import RequestLog
 
 app = FastAPI(
     title=config.fast_api.swagger_docs.title,
@@ -37,6 +33,7 @@ app = FastAPI(
     default_response_class=ORJSONResponse,
     dependencies=[Depends(x_request_id_required)]
 )
+
 
 # sentry_sdk.init(
 #     dsn=api_config.logging.sentry_dsn,
@@ -72,7 +69,7 @@ def configure_tracer() -> None:
     )
 
 
-logger = create_logger(__name__)
+# logger = create_logger(__name__)
 
 
 @app.on_event('startup')
@@ -109,6 +106,5 @@ if __name__ == '__main__':
         'main:app',
         host=config.fast_api.host,
         port=config.fast_api.port,
-        log_config=config.fast_api.logging,
-        log_level=logging.INFO,
+        log_config=LOGGING,
     )

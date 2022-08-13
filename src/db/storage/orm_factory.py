@@ -4,7 +4,7 @@ from typing import Union
 import databases
 from sqlalchemy.sql import Update, Select, Insert, Delete
 
-from config.settings import config
+from config.app_settings import config
 from db.storage.abstract_classes import AbstractDBClient
 
 

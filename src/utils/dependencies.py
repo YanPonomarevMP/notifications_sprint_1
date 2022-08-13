@@ -14,7 +14,7 @@ from notifier_api.models.event import EventValue, EventData, EventFromUser
 from notifier_api.models.http_responses import http  # type: ignore
 from notifier_api.models.tokens import AccessTokenData
 
-from config.settings import config
+from config.app_settings import config
 from utils.aiohttp_session import get_session
 
 

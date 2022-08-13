@@ -2,7 +2,7 @@
 from abc import ABC, abstractmethod
 from typing import AsyncIterator, Optional
 
-from config.settings import config
+from config.app_settings import config
 
 
 class AbstractMessageBroker(ABC):
