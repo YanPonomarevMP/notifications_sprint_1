@@ -16,7 +16,7 @@ from opentelemetry.sdk.trace import TracerProvider  # type: ignore
 from opentelemetry.sdk.trace.export import BatchSpanProcessor  # type: ignore
 # from sentry_sdk.integrations.asgi import SentryAsgiMiddleware
 
-from api.v1 import html_templates
+from api.v1.emails.main import router as v1_emails_router
 # from config.fast_api_logging import LOGGING
 # from api_config.fast_api_logging import LOGGING
 from config.settings import config
@@ -102,7 +102,7 @@ async def shutdown() -> None:
 configure_tracer()
 FastAPIInstrumentor().instrument_app(app)
 
-app.include_router(html_templates.router, prefix='/v1')
+app.include_router(v1_emails_router, prefix='/v1')
 
 if __name__ == '__main__':
     uvicorn.run(

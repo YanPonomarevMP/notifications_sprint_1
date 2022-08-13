@@ -11,10 +11,9 @@ from utils.dependencies import authorization_required, requests_per_minute, get_
 
 router = APIRouter(
     prefix='/html_templates',
-    tags=['html_templates'],
-    dependencies=[Depends(authorization_required)]
+    # tags=['html_templates'],
+    # dependencies=[Depends(authorization_required)]
 )
-
 
 @router.post(
     '/',
