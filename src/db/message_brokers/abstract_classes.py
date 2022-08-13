@@ -1,8 +1,6 @@
 """Модуль содержит абстрактные классы."""
 from abc import ABC, abstractmethod
-from typing import AsyncIterator, Optional
-
-from config.settings import config
+from typing import AsyncIterator, Optional, Union
 
 
 class AbstractMessageBroker(ABC):
@@ -29,14 +27,14 @@ class AbstractMessageBroker(ABC):
         queue_name: str,
         exchange_name: str,
         message_headers: Optional[dict] = None,
-        expiration: int = config.rabbit_mq.message.expiration
+        expiration: Optional[Union[int, float]] = None
     ) -> None:
         """
         Метод складывает сообщение в очередь.
 
         Args:
             message_body: содержимое сообщения
-            expiration: ttl сообщения, указывается в миллисекундах
+            expiration: ttl сообщения, указывается в секундах
             queue_name: название очереди, в которую нужно отправить сообщение
             exchange_name: название обменника
             message_headers: заголовок сообщения (сюда нужно вставить x-request-id)

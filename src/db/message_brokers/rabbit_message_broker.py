@@ -1,6 +1,6 @@
 """Модуль содержит класс с брокером сообщений."""
 import asyncio
-from typing import Optional
+from typing import Optional, Union
 
 import aio_pika
 from aio_pika import Message, DeliveryMode, ExchangeType
@@ -44,14 +44,14 @@ class RabbitMessageBroker(AbstractMessageBroker):
         queue_name: str,
         exchange_name: str,
         message_headers: Optional[dict] = None,
-        expiration: int = config.rabbit_mq.message.expiration
+        expiration: Optional[Union[int, float]] = None
     ) -> None:
         """
         Метод складывает сообщение в очередь.
 
         Args:
             message_body: содержимое сообщения
-            expiration: ttl сообщения, указывается в миллисекундах
+            expiration: ttl сообщения, указывается в секундах
             queue_name: название очереди, в которую нужно отправить сообщение
             exchange_name: название обменника
             message_headers: заголовок сообщения (сюда нужно вставить x-request-id)
