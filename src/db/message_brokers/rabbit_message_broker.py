@@ -5,6 +5,7 @@ from typing import Optional, Union, Callable
 import aio_pika
 from aio_pika import Message, DeliveryMode, ExchangeType
 from aio_pika.abc import AbstractRobustConnection, AbstractIncomingMessage
+from pamqp.commands import Basic
 
 from config.settings import config
 from db.message_brokers.abstract_classes import AbstractMessageBroker
@@ -49,7 +50,7 @@ class RabbitMessageBroker(AbstractMessageBroker):
         exchange_name: str,
         message_headers: Optional[dict] = None,
         expiration: Optional[Union[int, float]] = None
-    ) -> None:
+    ) -> Union[Basic.Ack, Basic.Nack, Basic.Reject]:
         """
         Метод складывает сообщение в очередь.
 
@@ -59,6 +60,8 @@ class RabbitMessageBroker(AbstractMessageBroker):
             queue_name: название очереди, в которую нужно отправить сообщение
             exchange_name: название обменника
             message_headers: заголовок сообщения (сюда нужно вставить x-request-id)
+        Returns:
+            Вернёт ответ на вопрос была ли запись успешно добавлена
         """
         connection = await self._get_connect()
         try:
@@ -70,8 +73,7 @@ class RabbitMessageBroker(AbstractMessageBroker):
                 delivery_mode=DeliveryMode.PERSISTENT,
                 expiration=expiration
             )
-
-            await exchange.publish(message=message, routing_key=queue_name)
+            return await exchange.publish(message=message, routing_key=queue_name)
         finally:  # Даже если метеорит упадёт на землю мы всё равно закроем соединение. :)
             await connection.close()
 
