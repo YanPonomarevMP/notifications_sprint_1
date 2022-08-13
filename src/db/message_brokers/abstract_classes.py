@@ -2,6 +2,8 @@
 from abc import ABC, abstractmethod
 from typing import Optional, Union, Callable
 
+from pamqp.commands import Basic
+
 
 class AbstractMessageBroker(ABC):
 
@@ -26,7 +28,7 @@ class AbstractMessageBroker(ABC):
         exchange_name: str,
         message_headers: Optional[dict] = None,
         expiration: Optional[Union[int, float]] = None
-    ) -> None:
+    ) -> Union[Basic.Ack, Basic.Nack, Basic.Reject]:
         """
         Метод складывает сообщение в очередь.
 
@@ -36,5 +38,8 @@ class AbstractMessageBroker(ABC):
             queue_name: название очереди, в которую нужно отправить сообщение
             exchange_name: название обменника
             message_headers: заголовок сообщения (сюда нужно вставить x-request-id)
+
+        Returns:
+            Вернёт ответ на вопрос была ли запись успешно добавлена
         """
         pass

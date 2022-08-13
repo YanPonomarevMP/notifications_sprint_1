@@ -60,6 +60,7 @@ class RabbitMessageBroker(AbstractMessageBroker):
             queue_name: название очереди, в которую нужно отправить сообщение
             exchange_name: название обменника
             message_headers: заголовок сообщения (сюда нужно вставить x-request-id)
+
         Returns:
             Вернёт ответ на вопрос была ли запись успешно добавлена
         """
