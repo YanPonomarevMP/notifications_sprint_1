@@ -1,10 +1,10 @@
 """Модуль содержит класс с брокером сообщений."""
 import asyncio
-from typing import Optional, Union, Callable, AsyncIterator
+from typing import Optional, Union, Callable
 
 import aio_pika
 from aio_pika import Message, DeliveryMode, ExchangeType
-from aio_pika.abc import AbstractRobustConnection
+from aio_pika.abc import AbstractRobustConnection, AbstractIncomingMessage
 
 from config.settings import config
 from db.message_brokers.abstract_classes import AbstractMessageBroker
@@ -27,15 +27,18 @@ class RabbitMessageBroker(AbstractMessageBroker):
 
         Args:
             queue_name: название очереди, из которой хотим получить данные
-            callback: функция, которая будет работать с итератором `def func(iterator: AsyncIterator)`
+            callback: функция, которая будет обрабатывать сообщения
         """
         connection = await self._get_connect()
         try:
             channel = await connection.channel()
             queue = await channel.declare_queue(name=queue_name, durable=True)
             iterator = queue.iterator()
-            await iterator.consume()  # Инициируем работу итератора, т.к. он нам нужен уже работающий.
-            await callback(iterator)
+            await iterator.consume()
+
+            async for message in iterator:
+                await callback(message)
+
         finally:  # Даже если украинские националисты будут под москвой мы всё равно закроем соединение. :)
             await connection.close()
 
@@ -90,33 +93,33 @@ class RabbitMessageBroker(AbstractMessageBroker):
 message_broker_factory = RabbitMessageBroker()
 
 
-async def callback(iterator: AsyncIterator) -> None:
+async def on_message(message: AbstractIncomingMessage) -> None:
     """
     Функция демонстрирует работу обработчика сообщений из очереди.
 
     По задумке message_broker_factory.consume будет получать на вход название очереди и функцию.
     Эта функция и будет обрабатывать сообщения (как показано ниже в коде).
 
-    Если вдруг потребуются доп. аргументы (что угодно кроме iterator) — всегда можно написать замыкание. :)
+    Если вдруг потребуются доп. аргументы (что угодно кроме message) — всегда можно написать замыкание. :)
 
     Args:
-        iterator: итератор с сообщениями из очереди
+        message: сообщение из очереди
     """
-    async for message in iterator:
-        print(f'Привет из функции-обработчика! Содержимое сообщения: {message.body.decode()}')  # noqa: WPS421, WPS237
-        await asyncio.sleep(3)  # Любая логика
-        await message.ack()  # Обязательно проставить галочку о том, что всё ок.
+    print(f'Привет из функции-обработчика! Содержимое сообщения: {message.body.decode()}')  # noqa: WPS421, WPS237
+    await asyncio.sleep(3)  # Любая логика
+    await message.ack()  # Обязательно проставить галочку о том, что всё ок.
 
 
 async def main() -> None:
-    """Функция «Quick Start»."""
-    await message_broker_factory.publish(
-        message_body='Какая-то byte строка, которую мы хотим записать'.encode(),
-        expiration=10,
-        queue_name='queue_test',
-        exchange_name='exc_queue_test'
-    )
-    await message_broker_factory.consume('queue_test', callback)
+    """Функция «Quick Start» (очередь и обменник предварительно нужно создать)."""
+    for i in range(3):
+        await message_broker_factory.publish(
+            message_body=f'Какая-то byte строка, которую мы хотим записать {i}'.encode(),
+            expiration=10,
+            queue_name='queue_test',
+            exchange_name='exc_queue_test'
+        )
+    await message_broker_factory.consume(queue_name='queue_test', callback=on_message)
 
 
 if __name__ == '__main__':

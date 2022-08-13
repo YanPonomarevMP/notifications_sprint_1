@@ -14,7 +14,7 @@ class AbstractMessageBroker(ABC):
 
         Args:
             queue_name: название очереди, из которой хотим получить данные
-            callback: функция, которая будет работать с итератором `def func(iterator: AsyncIterator)`
+            callback: функция, которая будет обрабатывать сообщения
         """
         pass
 
