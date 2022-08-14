@@ -32,13 +32,14 @@ class RabbitMessageBroker(AbstractMessageBroker):
         """
         connection = await self._get_connect()
         try:
+            running_loop = asyncio.get_running_loop()
             channel = await connection.channel()
             queue = await channel.declare_queue(name=queue_name, durable=True)
             iterator = queue.iterator()
             await iterator.consume()
 
             async for message in iterator:
-                await callback(message)
+                running_loop.create_task(callback(message))
 
         finally:  # Даже если украинские националисты будут под москвой мы всё равно закроем соединение. :)
             await connection.close()
