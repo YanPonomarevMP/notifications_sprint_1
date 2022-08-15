@@ -1,10 +1,13 @@
 """Модуль содержит CRUD для работы с шаблонами email сообщений"""
+from logging import getLogger
+
 from fastapi import APIRouter, Depends, Header
 
 from notifier_api.models.event import EventFromUser
 from notifier_api.models.standards_response import BaseUGCResponse
 # from models.event import EventFromUser
 from notifier_api.models.http_responses import http  # type: ignore
+from utils.custom_fastapi_router import LoggedRoute
 # from models.standards_response import BaseUGCResponse
 # from services.event_broker import event_broker
 from utils.dependencies import authorization_required, requests_per_minute, get_user_id_from_token, new_event
@@ -13,6 +16,7 @@ router = APIRouter(
     prefix='/html_templates',
     # tags=['html_templates'],
     # dependencies=[Depends(authorization_required)]
+    route_class=LoggedRoute,
 )
 
 @router.post(
@@ -46,4 +50,8 @@ async def post_rating(
     # )
     #
     # await event_broker.put(event_data)
+    logger.info('Hello!')
     return BaseUGCResponse(metadata=http.ok)
+
+
+logger = getLogger(__name__)

@@ -2,6 +2,7 @@
 import base64
 import datetime
 from enum import Enum
+from logging import getLogger
 from typing import Callable, AsyncGenerator, Union
 
 import aioredis
@@ -20,7 +21,9 @@ from utils.aiohttp_session import get_session
 
 async def authorization_required(
     authorization: str = Header(None),  # noqa: B008
-    x_request_id: str = Header(None)  # noqa: B008
+    x_request_id: str = Header(None),  # noqa: B008
+    x_request_log_message: str = Header(None),  # noqa: B008
+    x_request_logger_name: str = Header(None)  # noqa: B008
 ) -> None:
     """
     Функция не пропускает запросы без authorization.
@@ -28,6 +31,8 @@ async def authorization_required(
     Args:
         authorization: access токен, который нужно проверить
         x_request_id: id запроса пользователя
+        x_request_log_message: сообщение с содержимым запроса для логгера
+        x_request_logger_name: имя логгера
 
     Raises:
         HTTPException:
@@ -37,7 +42,9 @@ async def authorization_required(
             выплюнем его сообщение о том, что именно не так.
     """
     if not authorization:
-        raise HTTPException(status_code=http.bad_request.code, detail=http.bad_request.message)
+        logger = getLogger(x_request_logger_name)
+        logger.error(f'{http.unauthorized.message["msg"]} {x_request_log_message}')
+        raise HTTPException(status_code=http.unauthorized.code, detail=http.unauthorized.message)
 
     session = await get_session()
     url = f'http://{config.auth_api.host}:{config.auth_api.port}{config.auth_api.url_check_token}'  # noqa: WPS237
@@ -46,7 +53,9 @@ async def authorization_required(
 
     response = await session.post(url, json=json, headers=headers)
     if response.status != http.ok.code:
-        raise HTTPException(status_code=response.status, detail=await response.text())
+        logger = getLogger(x_request_logger_name)
+        logger.error(f'{http.forbidden.message["msg"]} {x_request_log_message}')
+        raise HTTPException(status_code=http.forbidden.code, detail=http.forbidden.message)
 
 
 async def parse_user_data_from_token(authorization: str = Header()) -> AccessTokenData:  # noqa: B008
@@ -106,18 +115,26 @@ async def new_event(event: EventFromUser, user_id: str, topic: Union[str, Enum],
     )
 
 
-async def x_request_id_required(x_request_id: str = Header(None)) -> None:  # noqa: B008
+async def x_request_id_required(
+    x_request_id: str = Header(None),  # noqa: B008
+    x_request_log_message: str = Header(None),  # noqa: B008
+    x_request_logger_name: str = Header(None)  # noqa: B008
+) -> None:  # noqa: B008
     """
     Функция не пропускает запросы без X-Request-Id.
 
     Args:
-        x_request_id: ключ, который должен придти в заголовке запроса
+        x_request_id: ключ, который должен прийти в заголовке запроса
+        x_request_log_message: сообщение с содержимым запроса для логгера
+        x_request_logger_name: имя логгера
 
     Raises:
         HTTPException: в случае отсутствия X-Request-Id
 
     """
     if not x_request_id:
+        logger = getLogger(x_request_logger_name)
+        logger.error(f'{http.request_id_required.message["msg"]} {x_request_log_message}')
         raise HTTPException(status_code=http.request_id_required.code, detail=http.request_id_required.message)
 
 
