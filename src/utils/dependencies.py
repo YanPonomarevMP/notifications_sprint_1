@@ -43,7 +43,7 @@ async def authorization_required(
     """
     if not authorization:
         logger = getLogger(x_request_logger_name)
-        logger.error(f'{http.unauthorized.message["msg"]} {x_request_log_message}')
+        logger.error(f'{http.unauthorized.message} {x_request_log_message}')
         raise HTTPException(status_code=http.unauthorized.code, detail=http.unauthorized.message)
 
     session = await get_session()
@@ -54,7 +54,7 @@ async def authorization_required(
     response = await session.post(url, json=json, headers=headers)
     if response.status != http.ok.code:
         logger = getLogger(x_request_logger_name)
-        logger.error(f'{http.forbidden.message["msg"]} {x_request_log_message}')
+        logger.error(f'{http.forbidden.message} {x_request_log_message}')
         raise HTTPException(status_code=http.forbidden.code, detail=http.forbidden.message)
 
 
@@ -134,7 +134,7 @@ async def x_request_id_required(
     """
     if not x_request_id:
         logger = getLogger(x_request_logger_name)
-        logger.error(f'{http.request_id_required.message["msg"]} {x_request_log_message}')
+        logger.error(f'{http.request_id_required.message} {x_request_log_message}')
         raise HTTPException(status_code=http.request_id_required.code, detail=http.request_id_required.message)
 
 
