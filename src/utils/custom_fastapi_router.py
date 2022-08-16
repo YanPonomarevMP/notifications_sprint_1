@@ -14,8 +14,7 @@ class LoggedRoute(APIRoute):
         async def custom_route_handler(request: Request) -> Response:
 
             logger_name, request_log_message = await parse_request_for_logging(request)
-            request.scope['headers'].append((b'x-request-log-message', request_log_message.encode()))
-            request.scope['headers'].append((b'x-request-logger-name', logger_name.encode()))
+            await set_headers_for_logging(request, request_log_message, logger_name)
 
             response: Response = await original_route_handler(request)
 
@@ -45,3 +44,12 @@ async def parse_response_for_logging(response: Response) -> str:
     body = response.body.decode()
 
     return f'{status_code} {body}'
+
+
+async def set_headers_for_logging(
+    request: Request,
+    log_message: str,
+    logger_name: str
+) -> None:
+    request.scope['headers'].append((b'x-request-log-message', log_message.encode()))
+    request.scope['headers'].append((b'x-request-logger-name', logger_name.encode()))
