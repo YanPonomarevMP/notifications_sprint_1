@@ -4,14 +4,15 @@ from typing import Optional, Union, Callable
 
 import aio_pika
 from aio_pika import Message, DeliveryMode, ExchangeType
-from aio_pika.abc import AbstractRobustConnection, AbstractIncomingMessage
+from aio_pika.abc import AbstractRobustConnection, AbstractIncomingMessage, AbstractRobustChannel
 from pamqp.commands import Basic
 
 from config.settings import config
 from db.message_brokers.abstract_classes import AbstractMessageBroker
 
 
-class RabbitMessageBroker(AbstractMessageBroker):
+# class RabbitMessageBroker(AbstractMessageBroker):
+class RabbitMessageBroker:
 
     """Класс с интерфейсом брокера сообщений RabbitMQ."""
 
@@ -34,7 +35,7 @@ class RabbitMessageBroker(AbstractMessageBroker):
         try:
             running_loop = asyncio.get_running_loop()
             channel = await connection.channel()
-            queue = await channel.declare_queue(name=queue_name, durable=True)
+            queue = await self._create_alive_queue(queue_name=queue_name, channel=channel)
             iterator = queue.iterator()
             await iterator.consume()
 
@@ -48,18 +49,16 @@ class RabbitMessageBroker(AbstractMessageBroker):
         self,
         message_body: bytes,
         queue_name: str,
-        exchange_name: str,
         message_headers: Optional[dict] = None,
-        expiration: Optional[Union[int, float]] = None
+        delay: Union[int, float] = 0
     ) -> Union[Basic.Ack, Basic.Nack, Basic.Reject]:
         """
         Метод складывает сообщение в очередь.
 
         Args:
             message_body: содержимое сообщения
-            expiration: ttl сообщения, указывается в секундах
+            delay: ttl сообщения, указывается в секундах (сколько секунд подождать прежде, чем отправить)
             queue_name: название очереди, в которую нужно отправить сообщение
-            exchange_name: название обменника
             message_headers: заголовок сообщения (сюда нужно вставить x-request-id)
 
         Returns:
@@ -68,20 +67,116 @@ class RabbitMessageBroker(AbstractMessageBroker):
         connection = await self._get_connect()
         try:
             channel = await connection.channel()
-            exchange = await channel.declare_exchange(
-                name=exchange_name,
+
+            exchange_incoming = await channel.declare_exchange(
+                name=config.rabbit_mq.exchange_incoming,
                 type=ExchangeType.FANOUT,
                 durable=True
             )
+
             message = Message(
                 headers=message_headers or {},
                 body=message_body,
                 delivery_mode=DeliveryMode.PERSISTENT,
-                expiration=expiration
+                expiration=delay
             )
-            return await exchange.publish(message=message, routing_key=queue_name)
+
+            await self._create_alive_queue(queue_name=queue_name, channel=channel)
+            return await exchange_incoming.publish(message=message, routing_key=queue_name)
         finally:  # Даже если метеорит упадёт на землю мы всё равно закроем соединение. :)
             await connection.close()
+
+    async def idempotency_startup(self):
+        """
+        Метод для конфигурации базовой архитектуры RabbitMQ.
+        Использовать ОДИН раз при старте сервиса.
+
+        Можно конечно и больше,
+        но этот метод синглтон и действие выполнит только один раз,
+        следовательно, никакого резона вызывать его более одного раза нет.
+        """
+        connection = await self._get_connect()
+        try:
+            channel = await connection.channel()
+
+            # Обменник, принимающий все входящие в rabbit сообщения.
+            exchange_incoming = await channel.declare_exchange(
+                name=config.rabbit_mq.exchange_incoming,
+                type=ExchangeType.FANOUT,
+                durable=True
+            )
+
+            # Обменник, сортирующий сообщения и распределяющий их в нужные «живые» очереди, исходя из routing_key.
+            exchange_sorter = await channel.declare_exchange(
+                name=config.rabbit_mq.exchange_sorter,
+                type=ExchangeType.FANOUT,
+                durable=True
+            )
+
+            # Обменник, доставляющий сообщения во временное хранилище,
+            # если попытка что-то сделать с сообщением не удалась
+            exchange_retry = await channel.declare_exchange(
+                name=config.rabbit_mq.exchange_retry,
+                type=ExchangeType.FANOUT,
+                durable=True
+            )
+
+            # Базовая очередь, в которую будут поступать все сообщения.
+            # По истечению ttl (может быть и ttl=0) отправляет сообщения в соответствующую routing_key очередь.
+            # С помощью такой архитектуры мы можем создавать отложенные сообщения,
+            # не прибегая к дополнительным инструментам (консистентно).
+            queue_waiting_depart = await channel.declare_queue(
+                name=config.rabbit_mq.queue_waiting_depart,
+                durable=True,
+                arguments={
+                    'x-dead-letter-exchange': config.rabbit_mq.exchange_sorter
+                }
+            )
+
+            # Очередь, где будут храниться все сообщения,
+            # которые не удалось обработать, определённое время (x-message-ttl).
+            # По истечению этого времени будет вновь попытка отправить сообщение в очередь.
+            queue_waiting_retry = await channel.declare_queue(
+                name=config.rabbit_mq.queue_waiting_retry,
+                durable=True,
+                arguments={
+                    'x-dead-letter-exchange': config.rabbit_mq.exchange_sorter,
+                    'x-message-ttl': config.rabbit_mq.default_message_ttl_ms
+                }
+            )
+            await queue_waiting_depart.bind(exchange_incoming)
+            await queue_waiting_retry.bind(exchange_retry)
+        finally:
+            await connection.close()
+
+    async def _create_alive_queue(self, queue_name: str, channel: AbstractRobustChannel):
+        """
+        Внутренний метод для создания «живой» очереди и привязки её к сортирующему обменнику.
+
+        Под живой очередью мы понимаем очередь, в которой хранятся сообщения, готовые к обработке.
+
+        Args:
+            queue_name: название очереди
+            channel: канал
+
+        Returns:
+            Вернёт созданную очередь и обменник.
+        """
+        exchange_sorter = await channel.declare_exchange(
+            name=config.rabbit_mq.exchange_sorter,
+            type=ExchangeType.FANOUT,
+            durable=True
+        )
+
+        queue = await channel.declare_queue(
+            name=queue_name,
+            durable=True,
+            arguments={
+                'x-dead-letter-exchange': config.rabbit_mq.exchange_retry
+            }
+        )
+        await queue.bind(exchange_sorter, routing_key=queue_name)
+        return queue
 
     async def _get_connect(self) -> AbstractRobustConnection:
         """
@@ -99,38 +194,3 @@ class RabbitMessageBroker(AbstractMessageBroker):
 
 
 message_broker_factory = RabbitMessageBroker()
-
-
-async def on_message(message: AbstractIncomingMessage) -> None:
-    """
-    Функция демонстрирует работу обработчика сообщений из очереди.
-
-    По задумке message_broker_factory.consume будет получать на вход название очереди и функцию.
-    Эта функция и будет обрабатывать сообщения (как показано ниже в коде).
-
-    Если вдруг потребуются доп. аргументы (что угодно кроме message) — всегда можно написать замыкание. :)
-
-    Args:
-        message: сообщение из очереди
-    """
-    print(f'Привет из функции-обработчика! Содержимое сообщения: {message.body.decode()}')  # noqa: WPS421, WPS237
-    await asyncio.sleep(3)  # Любая логика
-    await message.ack()  # Обязательно проставить галочку о том, что всё ок.
-
-
-async def main() -> None:
-    """Функция «Quick Start» (очередь и обменник предварительно нужно создать)."""
-    for i in range(3):
-        await message_broker_factory.publish(
-            message_body=f'Какая-то byte строка, которую мы хотим записать {i}'.encode(),
-            expiration=10,
-            queue_name='queue_test',
-            exchange_name='exc_queue_test'
-        )
-    await message_broker_factory.consume(queue_name='queue_test', callback=on_message)
-
-
-if __name__ == '__main__':
-    loop = asyncio.get_event_loop()
-    loop.run_until_complete(main())
-    loop.close()
