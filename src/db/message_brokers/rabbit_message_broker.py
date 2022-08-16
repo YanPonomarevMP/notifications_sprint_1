@@ -1,18 +1,40 @@
-"""Модуль содержит класс с брокером сообщений."""
+"""
+Модуль содержит класс с брокером сообщений.
+
+Архитектура Rabbit такая:
+
+Есть очередь, в которую попадают все вновь приходящие message — queue_waiting_depart.
+Есть обменник для этой очереди — exchange_incoming.
+
+По истечению expiration в очереди queue_waiting_depart message отправляются в сортирующий обменник — exchange_sorter.
+В обменнике exchange_sorter message перенаправляются в очереди с одноименными названиями routing_key.
+Иными словами сортировка такая: routing_key == queue_name
+
+В этой очереди message дожидается пока её схватит consumer.
+Если consumer что-то не смог сделать с сообщением
+(иными словами не сказал basic_ack) — message отправляется в обменник exchange_retry,
+а от туда сразу в очередь queue_waiting_retry.
+
+В очереди queue_waiting_retry установлен аргумент x-message-ttl,
+по истечению этого времени message отправится назад в exchange_sorter и цикл повторится.
+
+Соответственно на совести разработчика следить за кол-вом таких итераций и,
+если их кол-во превысит max_retry_count — дропить message, уведомляя об этом из логгера.
+"""
 import asyncio
 from typing import Optional, Union, Callable
 
 import aio_pika
 from aio_pika import Message, DeliveryMode, ExchangeType
-from aio_pika.abc import AbstractRobustConnection, AbstractIncomingMessage, AbstractRobustChannel
+from aio_pika.abc import AbstractRobustConnection, AbstractIncomingMessage, \
+    AbstractChannel, AbstractQueue
 from pamqp.commands import Basic
 
 from config.settings import config
 from db.message_brokers.abstract_classes import AbstractMessageBroker
 
 
-# class RabbitMessageBroker(AbstractMessageBroker):
-class RabbitMessageBroker:
+class RabbitMessageBroker(AbstractMessageBroker):
 
     """Класс с интерфейсом брокера сообщений RabbitMQ."""
 
@@ -51,7 +73,7 @@ class RabbitMessageBroker:
         queue_name: str,
         message_headers: Optional[dict] = None,
         delay: Union[int, float] = 0
-    ) -> Union[Basic.Ack, Basic.Nack, Basic.Reject]:
+    ) -> Union[Basic.Ack, Basic.Nack, Basic.Reject, None]:
         """
         Метод складывает сообщение в очередь.
 
@@ -86,7 +108,7 @@ class RabbitMessageBroker:
         finally:  # Даже если метеорит упадёт на землю мы всё равно закроем соединение. :)
             await connection.close()
 
-    async def idempotency_startup(self):
+    async def idempotency_startup(self) -> None:
         """
         Метод для конфигурации базовой архитектуры RabbitMQ.
         Использовать ОДИН раз при старте сервиса.
@@ -107,14 +129,14 @@ class RabbitMessageBroker:
             )
 
             # Обменник, сортирующий сообщения и распределяющий их в нужные «живые» очереди, исходя из routing_key.
-            exchange_sorter = await channel.declare_exchange(
+            exchange_sorter = await channel.declare_exchange(  # noqa: F841
                 name=config.rabbit_mq.exchange_sorter,
                 type=ExchangeType.DIRECT,
                 durable=True
             )
 
             # Обменник, доставляющий сообщения во временное хранилище,
-            # если попытка что-то сделать с сообщением не удалась
+            # если попытка что-то сделать с сообщением не удалась.
             exchange_retry = await channel.declare_exchange(
                 name=config.rabbit_mq.exchange_retry,
                 type=ExchangeType.FANOUT,
@@ -133,9 +155,9 @@ class RabbitMessageBroker:
                 }
             )
 
-            # Очередь, где будут храниться все сообщения,
-            # которые не удалось обработать, определённое время (x-message-ttl).
-            # По истечению этого времени будет вновь попытка отправить сообщение в очередь.
+            # Очередь, где будут храниться все сообщения, которые не удалось обработать.
+            # Они будут лежать в очереди определённое время (x-message-ttl).
+            # По истечению этого времени будет вновь попытка отправить сообщение в «живую» очередь.
             queue_waiting_retry = await channel.declare_queue(
                 name=config.rabbit_mq.queue_waiting_retry,
                 durable=True,
@@ -149,7 +171,7 @@ class RabbitMessageBroker:
         finally:
             await connection.close()
 
-    async def _create_alive_queue(self, queue_name: str, channel: AbstractRobustChannel):
+    async def _create_alive_queue(self, queue_name: str, channel: AbstractChannel) -> AbstractQueue:
         """
         Внутренний метод для создания «живой» очереди и привязки её к сортирующему обменнику.
 
@@ -189,3 +211,32 @@ class RabbitMessageBroker:
 
 
 message_broker_factory = RabbitMessageBroker()
+
+
+async def callback(message: AbstractIncomingMessage) -> None:  # noqa: D103
+    if message.info()['headers']['x-death'][0]['count'] + 1 > config.rabbit_mq.max_retry_count:
+        print(message.body)  # noqa: WPS421
+        await message.ack()
+    else:
+        print('Ждите', message.info()['headers']['x-death'][0]['count'])  # noqa: WPS421
+        await message.reject()
+
+
+async def quick_start() -> None:
+    """Функция для быстрого знакомства с интерфейсом."""
+    await message_broker_factory.idempotency_startup()
+    queue_name = 'queue_alive'
+
+    for i in range(5):
+        message_body = f'message {i}'.encode()
+        await message_broker_factory.publish(
+            message_body=message_body,
+            queue_name=queue_name,
+            message_headers={'x-request-id': 'wwwwww'}
+        )
+    await message_broker_factory.consume(queue_name=queue_name, callback=callback)
+
+
+if __name__ == '__main__':
+    event_loop = asyncio.get_event_loop()
+    event_loop.run_until_complete(quick_start())

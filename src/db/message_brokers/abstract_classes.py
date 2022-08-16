@@ -25,18 +25,16 @@ class AbstractMessageBroker(ABC):
         self,
         message_body: bytes,
         queue_name: str,
-        exchange_name: str,
         message_headers: Optional[dict] = None,
-        expiration: Optional[Union[int, float]] = None
-    ) -> Union[Basic.Ack, Basic.Nack, Basic.Reject]:
+        delay: Union[int, float] = 0
+    ) -> Union[Basic.Ack, Basic.Nack, Basic.Reject, None]:
         """
         Метод складывает сообщение в очередь.
 
         Args:
             message_body: содержимое сообщения
-            expiration: ttl сообщения, указывается в секундах
+            delay: ttl сообщения, указывается в секундах
             queue_name: название очереди, в которую нужно отправить сообщение
-            exchange_name: название обменника
             message_headers: заголовок сообщения (сюда нужно вставить x-request-id)
 
         Returns:

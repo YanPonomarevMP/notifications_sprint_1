@@ -19,7 +19,8 @@ class RabbitSettings(BaseSettings):
     exchange_incoming: str = 'exchange_incoming'
     exchange_sorter: str = 'exchange_sorter'
     exchange_retry: str = 'exchange_retry'
-    default_message_ttl_ms: int = 60_000  # 1 минута
+    default_message_ttl_ms: int = 1  # 1 минута
+    max_retry_count: int = 5
 
 
 class PostgresSettings(BaseSettings):
