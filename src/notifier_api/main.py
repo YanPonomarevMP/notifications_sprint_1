@@ -18,7 +18,7 @@ from config.settings import config
 from config.logging_settings import LOGGING
 from db.storage import orm_factory
 from utils import aiohttp_session
-from utils.dependencies import x_request_id_required
+from utils.dependencies import x_request_id_required, authorization_required
 
 # from sentry_sdk.integrations.asgi import SentryAsgiMiddleware
 # from api_config.fast_api_logging import LOGGING
@@ -31,7 +31,10 @@ app = FastAPI(
     docs_url=config.fast_api.swagger_docs.docs_url,
     openapi_url=config.fast_api.swagger_docs.openapi_url,
     default_response_class=ORJSONResponse,
-    dependencies=[Depends(x_request_id_required)]
+    dependencies=[
+        Depends(x_request_id_required),
+        Depends(authorization_required),
+    ]
 )
 
 

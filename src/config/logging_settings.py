@@ -1,9 +1,8 @@
 # flake8: noqa
 """Модуль содержит кастомную настройку для логгера."""
 
-LOG_FORMAT_DEFAULT = '%(levelname)-8s | %(asctime)s | %(name)-30s | %(message)s'
+LOG_FORMAT_DEFAULT = '%(levelname)-8s | %(asctime)s | %(name)-35s | %(message)s'
 LOG_FORMAT_JSON = '{"level": "%(levelname)s", "time": "%(asctime)s", "logger_name": "%(name)s", "message": "%(message)s"}'
-# LOG_FORMAT_JSON = '%(levelname)s | %(asctime)s | %(name)s | %(message)s'
 LOG_DEFAULT_HANDLERS = ['console']
 
 LOGGING = {
@@ -35,28 +34,23 @@ LOGGING = {
     'loggers': {
         'uvicorn.error': {
             'level': 'INFO',
-            # 'formatter': 'json',
             'handlers': ['file']
         },
         'uvicorn.access': {
-            'level': 'INFO',
-            # 'formatter': 'json',
+            'level': 'WARNING',
             'handlers': ['file']
         },
         'opentelemetry.trace': {
             'level': 'WARNING',
-            # 'formatter': 'json',
             'handlers': ['file']
         },
-        'security': {
+        'access': {
             'level': 'INFO',
-            # 'formatter': 'json',
             'handlers': ['file']
         },
     },
     'root': {
         'level': 'INFO',
-        # 'formatter': 'default',
         'handlers': LOG_DEFAULT_HANDLERS,
     },
 }
