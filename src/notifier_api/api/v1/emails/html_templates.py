@@ -16,7 +16,7 @@ router = APIRouter(
     prefix='/html_templates',
     # tags=['html_templates'],
     # dependencies=[Depends(authorization_required)]
-    dependencies=[Depends(requests_per_minute(3))],
+    # dependencies=[Depends(requests_per_minute(3))],
     route_class=LoggedRoute,
 )
 
@@ -26,7 +26,7 @@ router = APIRouter(
     summary='Records an event',
     description='Endpoint writes a rating to the database',
     response_description='Returns the answer whether the event is recorded in the database',
-    # dependencies=[Depends(requests_per_minute(10))]
+    dependencies=[Depends(requests_per_minute(10))]
 )
 async def post_rating(
     rating: EventFromUser,
