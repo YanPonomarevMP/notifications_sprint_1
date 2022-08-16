@@ -17,6 +17,13 @@ class RabbitSettings(BaseSettings):
     port: int = vault.get_secret('rabbit_port')
     login: SecretStr = vault.get_secret('rabbit_login')
     password: SecretStr = vault.get_secret('rabbit_password')
+    queue_waiting_depart: str = 'queue_waiting_depart'
+    queue_waiting_retry: str = 'queue_waiting_retry'
+    exchange_incoming: str = 'exchange_incoming'
+    exchange_sorter: str = 'exchange_sorter'
+    exchange_retry: str = 'exchange_retry'
+    default_message_ttl_ms: int = 1  # 1 минута
+    max_retry_count: int = 5
 
 
 class PostgresSettings(BaseSettings):
