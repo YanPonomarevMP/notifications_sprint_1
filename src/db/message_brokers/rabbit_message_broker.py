@@ -109,7 +109,7 @@ class RabbitMessageBroker:
             # Обменник, сортирующий сообщения и распределяющий их в нужные «живые» очереди, исходя из routing_key.
             exchange_sorter = await channel.declare_exchange(
                 name=config.rabbit_mq.exchange_sorter,
-                type=ExchangeType.FANOUT,
+                type=ExchangeType.DIRECT,
                 durable=True
             )
 
@@ -162,11 +162,6 @@ class RabbitMessageBroker:
         Returns:
             Вернёт созданную очередь и обменник.
         """
-        exchange_sorter = await channel.declare_exchange(
-            name=config.rabbit_mq.exchange_sorter,
-            type=ExchangeType.FANOUT,
-            durable=True
-        )
 
         queue = await channel.declare_queue(
             name=queue_name,
@@ -175,7 +170,7 @@ class RabbitMessageBroker:
                 'x-dead-letter-exchange': config.rabbit_mq.exchange_retry
             }
         )
-        await queue.bind(exchange_sorter, routing_key=queue_name)
+        await queue.bind(config.rabbit_mq.exchange_sorter, routing_key=queue_name)
         return queue
 
     async def _get_connect(self) -> AbstractRobustConnection:
