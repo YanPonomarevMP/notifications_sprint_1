@@ -1,5 +1,5 @@
 """Модуль содержит pydantic модель с данными запроса и ответа для access лога."""
-from typing import Optional, Tuple, Union, List
+from typing import Optional, Union, List
 
 from models.base_orjson import BaseOrjson  # type: ignore
 from pydantic import validator
@@ -34,7 +34,7 @@ class XRequestID(BaseOrjson):
     value: Union[List[tuple], str]
 
     @validator('value')
-    def parse_x_request_id_from_headers(cls, headers: str) -> str:  # noqa: WPS110, N805
+    def parse_x_request_id_from_headers(cls, headers: List[tuple]) -> Optional[str]:  # noqa: WPS110, N805
         """
         Метод парсит x_request_id из списка хэдеров.
 
@@ -48,6 +48,7 @@ class XRequestID(BaseOrjson):
         for header in headers:
             if header[0] == b'x-request-id':
                 return header[1].decode()
+        return None
 
 
 class Client(BaseOrjson):
