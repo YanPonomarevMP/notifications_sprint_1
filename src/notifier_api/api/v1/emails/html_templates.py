@@ -16,6 +16,7 @@ router = APIRouter(
     prefix='/html_templates',
     # tags=['html_templates'],
     # dependencies=[Depends(authorization_required)]
+    dependencies=[Depends(requests_per_minute(3))],
     route_class=LoggedRoute,
 )
 

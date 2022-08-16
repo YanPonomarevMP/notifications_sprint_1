@@ -8,9 +8,8 @@ from typing import Callable, AsyncGenerator, Union
 import aioredis
 import orjson
 from aioredis import Redis
-from fastapi import Header, HTTPException, Depends, Request
+from fastapi import Header, HTTPException, Depends
 
-# from api_config.settings import api_config
 from notifier_api.models.event import EventValue, EventData, EventFromUser
 from notifier_api.models.http_responses import http  # type: ignore
 from notifier_api.models.tokens import AccessTokenData
@@ -21,7 +20,7 @@ from utils.aiohttp_session import get_session
 
 async def authorization_required(
     authorization: str = Header(None),  # noqa: B008
-    x_request_id: str = Header(None),  # noqa: B008
+    x_request_id: str = Header(None),  # noqa: B008, WPS204
     x_request_log_message: str = Header(None),  # noqa: B008
     x_request_logger_name: str = Header(None)  # noqa: B008
 ) -> None:
@@ -43,7 +42,7 @@ async def authorization_required(
     """
     if not authorization:
         logger = getLogger(x_request_logger_name)
-        logger.error(f'{http.unauthorized.message} {x_request_log_message}')
+        logger.error(f'{http.unauthorized.message} {x_request_log_message}')  # noqa: WPS237
         raise HTTPException(status_code=http.unauthorized.code, detail=http.unauthorized.message)
 
     session = await get_session()
@@ -54,7 +53,7 @@ async def authorization_required(
     response = await session.post(url, json=json, headers=headers)
     if response.status != http.ok.code:
         logger = getLogger(x_request_logger_name)
-        logger.error(f'{http.forbidden.message} {x_request_log_message}')
+        logger.error(f'{http.forbidden.message} {x_request_log_message}')  # noqa: WPS237
         raise HTTPException(status_code=http.forbidden.code, detail=http.forbidden.message)
 
 
@@ -134,7 +133,7 @@ async def x_request_id_required(
     """
     if not x_request_id:
         logger = getLogger(x_request_logger_name)
-        logger.error(f'{http.request_id_required.message} {x_request_log_message}')
+        logger.error(f'{http.request_id_required.message} {x_request_log_message}')  # noqa: WPS237
         raise HTTPException(status_code=http.request_id_required.code, detail=http.request_id_required.message)
 
 
@@ -172,17 +171,19 @@ def requests_per_minute(limiter: int) -> Callable:
     """
 
     async def inner(
-        request: Request,
         redis_conn: Redis = Depends(get_redis_connect),  # noqa: B008
-        authorization: str = Header(None)  # noqa: B008
+        authorization: str = Header(None),  # noqa: B008
+        x_request_log_message: str = Header(None),  # noqa: B008
+        x_request_logger_name: str = Header(None)  # noqa: B008
     ) -> None:
         """
         Функция для ограничения числа запросов в минуту.
 
         Args:
-            request: request запроса пользователя (из него нам нужен url path)
             redis_conn: соединение с Redis
             authorization: ключ в заголовке запроса (access токен пользователя)
+            x_request_log_message: сообщение с содержимым запроса для логгера
+            x_request_logger_name: имя логгера
 
         Raises:
             HTTPException:
@@ -192,7 +193,7 @@ def requests_per_minute(limiter: int) -> Callable:
         user_id = payload.user_id
 
         now = datetime.datetime.now()
-        key = f'{request.url.path}:{user_id}:{now.minute}'  # noqa: WPS237
+        key = f'{x_request_logger_name}:{user_id}:{now.minute}'  # noqa: WPS237
 
         async with redis_conn.pipeline(transaction=True) as pipe:
             result_from_redis = await (
@@ -202,6 +203,8 @@ def requests_per_minute(limiter: int) -> Callable:
         request_number = result_from_redis[0]
 
         if request_number > limiter:
+            logger = getLogger(x_request_logger_name)
+            logger.error(f'{http.too_many_requests.message} {x_request_log_message}')  # noqa: WPS237
             raise HTTPException(status_code=http.too_many_requests.code, detail=http.too_many_requests.message)
 
     return inner
