@@ -1,0 +1,91 @@
+@startuml
+<style>
+    package {
+        backgroundcolor #CCC
+        Shadowing 1
+    }
+    document {
+        backgroundcolor #949494
+    }
+    frame {
+        backgroundcolor #EEE
+    }
+    database {
+        backgroundcolor #A5CEF0
+    }
+    queue {
+        backgroundcolor #F78F8F
+    }
+    actor {
+        linethickness 3
+        linecolor #2B2B2B
+    }
+    arrow {
+        linethickness 2
+        linecolor #2B2B2B
+    }
+    folder {
+        backgroundcolor #FFCD73
+    }
+    card {
+        backgroundcolor #A7EB88
+    }
+</style>
+
+package all_alive_queue {
+    queue queue_alive_1 as "queue_alive_1" {
+    }
+    queue queue_alive_2 as "queue_alive_2" {
+    }
+}
+queue queue_waiting_depart as "queue_waiting_depart" {
+}
+
+queue queue_waiting_retry as "queue_waiting_retry" {
+}
+
+card exchange_incoming as "exchange\nincoming" {
+}
+
+card exchange_sorter as "exchange\nsorter" {
+}
+
+card exchange_retry as "exchange\nretry" {
+}
+
+agent api as "API"
+agent service_1 as "service_1"
+agent service_2 as "service_2"
+
+note bottom of all_alive_queue
+  Эти очереди будут
+  создаваться сервисами
+  для своих нужд
+end note
+
+note right of queue_waiting_retry
+  У этой очереди есть параметр
+  x-message-ttl
+  Такое время тут будут находится сообщения,
+  которые не удалось обработать consumer-у
+end note
+
+api -left-> exchange_incoming: Положи сообщение в очередь\nчерез n сек.
+exchange_incoming -left-> queue_waiting_depart
+queue_waiting_depart -[dashed]up-> exchange_sorter : Когда message умирает\nоно направляется в сортировщик
+
+exchange_sorter -up--> queue_alive_2 : Сообщения сортируются\nпо следующему алгоритму:\nrouting_key == queue_name
+exchange_sorter -up-> queue_alive_1
+
+queue_alive_1 -[dashed]up-> exchange_retry
+queue_alive_2 -[dashed]up-> exchange_retry : Если что-то пошло не так\nи consumer не сказал basic.ack —\nкладём во временное хранилище
+exchange_retry -> queue_waiting_retry
+
+queue_waiting_retry -[dashed]---> exchange_sorter : По истечению x-message-ttl\nочередь снова отправит message\nи цикл замкнётся.\nОтветственность программиста\nследить за кол-вом итераций\nи если что дропить message,\nуведомляя об этом из логгера
+
+queue_alive_1 -down-> service_1 : Просигнализирует\nBasic.ack, Basic.nack\nили Basic.reject
+queue_alive_2 -down-> service_2
+
+service_1 -up-> exchange_incoming
+service_2 --> exchange_incoming
+@enduml
