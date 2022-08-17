@@ -17,13 +17,13 @@ class RabbitSettings(BaseSettings):
     port: int = vault.get_secret('rabbit_port')
     login: SecretStr = vault.get_secret('rabbit_login')
     password: SecretStr = vault.get_secret('rabbit_password')
-    queue_waiting_depart: str = 'queue_waiting_depart'
-    queue_waiting_retry: str = 'queue_waiting_retry'
-    exchange_incoming: str = 'exchange_incoming'
-    exchange_sorter: str = 'exchange_sorter'
-    exchange_retry: str = 'exchange_retry'
-    default_message_ttl_ms: int = 1  # 1 минута
-    max_retry_count: int = 5
+    queue_waiting_depart: str = vault.get_secret('queue_waiting_depart')
+    queue_waiting_retry: str = vault.get_secret('queue_waiting_retry')
+    exchange_incoming: str = vault.get_secret('exchange_incoming')
+    exchange_sorter: str = vault.get_secret('exchange_sorter')
+    exchange_retry: str = vault.get_secret('exchange_retry')
+    default_message_ttl_ms: int = vault.get_secret('default_message_ttl_ms')
+    max_retry_count: int = vault.get_secret('max_retry_count')
 
 
 class PostgresSettings(BaseSettings):
@@ -59,7 +59,7 @@ class SettingsAuthAPI(BaseSettings):
 
     host: str = vault.get_secret('auth_api_host')
     port: int = vault.get_secret('auth_api_port')
-    url_check_token: str = '/v1/back/check_token'
+    url_check_token: str = vault.get_secret('url_check_token')
     access_token: SecretStr = vault.get_secret('auth_api_access_token')
 
 

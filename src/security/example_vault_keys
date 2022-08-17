@@ -30,3 +30,13 @@ vault kv put notifications/pg_user value=app
 vault kv put notifications/pg_password value=123qwe
 vault kv put notifications/pg_host value=5432
 vault kv put notifications/pg_db_name value=notifications
+
+vault kv put notifications/queue_waiting_depart value=queue_waiting_depart
+vault kv put notifications/queue_waiting_retry value=queue_waiting_retry
+vault kv put notifications/exchange_incoming value=exchange_incoming
+vault kv put notifications/exchange_sorter value=exchange_sorter
+vault kv put notifications/exchange_retry value=exchange_retry
+vault kv put notifications/default_message_ttl_ms value=60000  # Одна минута
+vault kv put notifications/max_retry_count value=3
+
+vault kv put notifications/url_check_token value=/v1/back/check_token
