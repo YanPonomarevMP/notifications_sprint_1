@@ -114,7 +114,7 @@ class RabbitMessageBroker(AbstractMessageBroker):
         Использовать ОДИН раз при старте сервиса.
 
         Можно конечно и больше,
-        но этот метод синглтон и действие выполнит только один раз,
+        но этот метод все действие выполнит только один раз,
         следовательно, никакого резона вызывать его более одного раза нет.
         """
         connection = await self._get_connect()
@@ -175,7 +175,7 @@ class RabbitMessageBroker(AbstractMessageBroker):
         """
         Внутренний метод для создания «живой» очереди и привязки её к сортирующему обменнику.
 
-        Под живой очередью мы понимаем очередь, в которой хранятся сообщения, готовые к обработке.
+        Под живой очередью мы понимаем очередь, из которой consumer будет выкусывать данные.
 
         Args:
             queue_name: название очереди
@@ -212,6 +212,9 @@ class RabbitMessageBroker(AbstractMessageBroker):
 
 message_broker_factory = RabbitMessageBroker()
 
+
+# Отсюда и ниже примеры, их нужно удалить после того, как станет всё ясно.
+# Я просто оставила их тут, что бы было удобнее ориентироваться в интерфейсе класса.
 
 async def callback(message: AbstractIncomingMessage) -> None:  # noqa: D103
     if message.info()['headers']['x-death'][0]['count'] + 1 > config.rabbit_mq.max_retry_count:
