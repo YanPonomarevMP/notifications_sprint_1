@@ -12,7 +12,7 @@ class ResponseData(BaseOrjson):
     response: List
 
 
-class BaseUGCResponse(BaseOrjson):
+class BaseNotificationsResponse(BaseOrjson):
 
     """Формат ответа UGC API."""
 

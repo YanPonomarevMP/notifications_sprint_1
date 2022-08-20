@@ -19,7 +19,7 @@ from utils.aiohttp_session import get_session
 
 
 async def authorization_required(
-    authorization: str = Header(None),  # noqa: B008
+    authorization: str = Header(None, description='JWT token. authorization_required'),  # noqa: B008
     x_request_id: str = Header(None),  # noqa: B008, WPS204
     x_request_log_message: str = Header(None),  # noqa: B008
     x_request_logger_name: str = Header(None)  # noqa: B008
@@ -57,7 +57,7 @@ async def authorization_required(
         raise HTTPException(status_code=http.forbidden.code, detail=http.forbidden.message)
 
 
-async def parse_user_data_from_token(authorization: str = Header()) -> AccessTokenData:  # noqa: B008
+async def parse_user_data_from_token(authorization: str = Header(default=None)) -> AccessTokenData:  # noqa: B008
     """
     Функция распарсивает токен.
 
@@ -172,9 +172,9 @@ def requests_per_minute(limiter: int) -> Callable:
 
     async def inner(
         redis_conn: Redis = Depends(get_redis_connect),  # noqa: B008
-        authorization: str = Header(None),  # noqa: B008
-        x_request_log_message: str = Header(None),  # noqa: B008
-        x_request_logger_name: str = Header(None)  # noqa: B008
+        authorization: str = Header(default=None, description='JWT token. requests_per_minute'),  # noqa: B008
+        x_request_log_message: str = Header(default=None, include_in_schema=False),  # noqa: B008
+        x_request_logger_name: str = Header(default=None, include_in_schema=False)  # noqa: B008
     ) -> None:
         """
         Функция для ограничения числа запросов в минуту.
