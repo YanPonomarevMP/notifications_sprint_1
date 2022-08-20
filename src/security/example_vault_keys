@@ -28,7 +28,7 @@ vault kv put notifications/redis_port value=6379
 
 vault kv put notifications/pg_user value=app
 vault kv put notifications/pg_password value=123qwe
-vault kv put notifications/pg_host value=5432
+vault kv put notifications/pg_host value=localhost
 vault kv put notifications/pg_db_name value=notifications
 
 vault kv put notifications/queue_waiting_depart value=queue_waiting_depart
