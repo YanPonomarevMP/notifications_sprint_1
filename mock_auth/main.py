@@ -2,7 +2,7 @@
 # type: ignore
 """Модуль содержит псевдо аут (мок) сервер."""
 import uvicorn
-from fastapi import FastAPI, Header
+from fastapi import FastAPI, Header, Body
 
 app = FastAPI()
 
@@ -20,6 +20,21 @@ async def check_token(
     print('x_request_id', x_request_id)
 
     return {'msg': 'OK'}
+
+
+@app.get('/v1/back/email')
+async def check_token(
+    authorization: str = Header(None),
+    email: str = Body(None)
+) -> dict:
+
+    """Ручка возвращает email."""
+
+    print('authorization', authorization)
+    print()
+    print('email', email)
+
+    return {'email': 'vladasabelnikova@yandex.ru'}
 
 
 if __name__ == '__main__':
