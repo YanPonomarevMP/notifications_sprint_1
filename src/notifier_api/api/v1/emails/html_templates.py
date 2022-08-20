@@ -4,11 +4,11 @@ from logging import getLogger
 from fastapi import APIRouter, Depends, Header
 
 from notifier_api.models.event import EventFromUser
-from notifier_api.models.standards_response import BaseUGCResponse
+from notifier_api.models.standards_response import BaseNotificationsResponse
 # from models.event import EventFromUser
 from notifier_api.models.http_responses import http  # type: ignore
 from utils.custom_fastapi_router import LoggedRoute
-# from models.standards_response import BaseUGCResponse
+# from models.standards_response import BaseNotificationsResponse
 # from services.event_broker import event_broker
 from utils.dependencies import authorization_required, requests_per_minute, get_user_id_from_token, new_event
 
@@ -22,7 +22,8 @@ router = APIRouter(
 
 @router.post(
     '/',
-    response_model=BaseUGCResponse,
+    status_code=http.created.code,
+    response_model=BaseNotificationsResponse,
     summary='Records an event',
     description='Endpoint writes a rating to the database',
     response_description='Returns the answer whether the event is recorded in the database',
@@ -30,8 +31,9 @@ router = APIRouter(
 )
 async def post_rating(
     rating: EventFromUser,
-    authorization: str = Header(),  # noqa: B008
-) -> BaseUGCResponse:
+    authorization: str = Header(default=None, description='12345'),  # noqa: B008
+    x_request_log_message: str = Header(default=None, include_in_schema=False),
+) -> BaseNotificationsResponse:
     """
     Ручка записывает событие в базу данных.
 
@@ -52,7 +54,9 @@ async def post_rating(
     #
     # await event_broker.put(event_data)
     logger.info('Hello!')
-    return BaseUGCResponse(metadata=http.ok)
+    answer = {'metadata': http.created}
+    # return BaseNotificationsResponse(metadata=http.created)
+    return answer
 
 
 logger = getLogger(__name__)
