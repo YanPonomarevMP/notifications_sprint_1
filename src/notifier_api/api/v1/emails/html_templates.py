@@ -1,8 +1,14 @@
 """Модуль содержит CRUD для работы с шаблонами email сообщений"""
 from logging import getLogger
+from uuid import uuid4
 
 from fastapi import APIRouter, Depends, Header
+from sqlalchemy import select, create_engine
+from sqlalchemy.dialects.postgresql import insert
+from sqlalchemy.orm import Session
 
+from db.models.email_templates import HTMLTemplates
+from db.storage.orm_factory import get_db, AsyncPGClient
 from notifier_api.models.event import EventFromUser
 from notifier_api.models.standards_response import BaseNotificationsResponse
 # from models.event import EventFromUser
@@ -33,6 +39,7 @@ async def post_rating(
     rating: EventFromUser,
     authorization: str = Header(default=None, description='12345'),  # noqa: B008
     x_request_log_message: str = Header(default=None, include_in_schema=False),
+    db: AsyncPGClient = Depends(get_db)
 ) -> BaseNotificationsResponse:
     """
     Ручка записывает событие в базу данных.
@@ -53,6 +60,30 @@ async def post_rating(
     # )
     #
     # await event_broker.put(event_data)
+    values_list = [{'template': '22 in list', 'id': uuid4()}]
+    query = insert(HTMLTemplates).returning(HTMLTemplates.id).values(values_list)
+    do_nothing_query = query.on_conflict_do_nothing(index_elements=['id'])
+    query_select = select(HTMLTemplates)
+
+    # engine = create_engine("postgresql://app:123qwe@localhost/notifications")
+    # session = Session(engine)
+    # result = session.execute(do_nothing_query)
+
+
+    # Штука работает.
+    # result = db.session.iterate(do_nothing_query)
+    # async for row in result:
+    #     print(row.template)
+
+    result = await db.execute(do_nothing_query)
+    print(result)
+
+    result_1 = await db.execute(query_select)
+    for row in result_1:
+        print(row.template)
+
+
+    # print(result)
     logger.info('Hello!')
     answer = {'metadata': http.created}
     # return BaseNotificationsResponse(metadata=http.created)
