@@ -34,6 +34,8 @@ class AsyncPGClient(AbstractDBClient):
         Returns:
 
         """
+        if query.is_select:
+            return await self.session.fetch_all(query)
         return await self.session.execute(query)
 
 
