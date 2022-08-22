@@ -20,9 +20,6 @@ from utils.dependencies import authorization_required, requests_per_minute, get_
 
 router = APIRouter(
     prefix='/html_templates',
-    # tags=['html_templates'],
-    # dependencies=[Depends(authorization_required)]
-    # dependencies=[Depends(requests_per_minute(3))],
     route_class=LoggedRoute,
 )
 
@@ -37,8 +34,8 @@ router = APIRouter(
 )
 async def post_rating(
     rating: EventFromUser,
-    authorization: str = Header(default=None, description='12345'),  # noqa: B008
-    x_request_log_message: str = Header(default=None, include_in_schema=False),
+    authorization: str = Header(description='JWT token 1'),  # noqa: B008
+    # x_request_log_message: str = Header(default=None, include_in_schema=False),
     db: AsyncPGClient = Depends(get_db)
 ) -> BaseNotificationsResponse:
     """

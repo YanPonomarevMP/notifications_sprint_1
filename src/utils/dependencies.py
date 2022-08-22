@@ -19,10 +19,10 @@ from utils.aiohttp_session import get_session
 
 
 async def authorization_required(
-    authorization: str = Header(None, description='JWT token. authorization_required'),  # noqa: B008
-    x_request_id: str = Header(None),  # noqa: B008, WPS204
-    x_request_log_message: str = Header(None),  # noqa: B008
-    x_request_logger_name: str = Header(None)  # noqa: B008
+    authorization: str = Header(description='JWT token'),  # noqa: B008
+    x_request_id: str = Header(),  # noqa: B008, WPS204
+    x_request_log_message: str = Header(include_in_schema=False),  # noqa: B008
+    x_request_logger_name: str = Header(include_in_schema=False)  # noqa: B008
 ) -> None:
     """
     Функция не пропускает запросы без authorization.
@@ -57,7 +57,7 @@ async def authorization_required(
         raise HTTPException(status_code=http.forbidden.code, detail=http.forbidden.message)
 
 
-async def parse_user_data_from_token(authorization: str = Header(default=None)) -> AccessTokenData:  # noqa: B008
+async def parse_user_data_from_token(authorization: str = Header(description='JWT token')) -> AccessTokenData:  # noqa: B008
     """
     Функция распарсивает токен.
 
@@ -115,9 +115,9 @@ async def new_event(event: EventFromUser, user_id: str, topic: Union[str, Enum],
 
 
 async def x_request_id_required(
-    x_request_id: str = Header(None),  # noqa: B008
-    x_request_log_message: str = Header(None),  # noqa: B008
-    x_request_logger_name: str = Header(None)  # noqa: B008
+    x_request_id: str = Header(),  # noqa: B008
+    x_request_log_message: str = Header(include_in_schema=False),  # noqa: B008
+    x_request_logger_name: str = Header(include_in_schema=False)  # noqa: B008
 ) -> None:  # noqa: B008
     """
     Функция не пропускает запросы без X-Request-Id.
@@ -172,9 +172,9 @@ def requests_per_minute(limiter: int) -> Callable:
 
     async def inner(
         redis_conn: Redis = Depends(get_redis_connect),  # noqa: B008
-        authorization: str = Header(default=None, description='JWT token. requests_per_minute'),  # noqa: B008
-        x_request_log_message: str = Header(default=None, include_in_schema=False),  # noqa: B008
-        x_request_logger_name: str = Header(default=None, include_in_schema=False)  # noqa: B008
+        authorization: str = Header(description='JWT token'),  # noqa: B008
+        x_request_log_message: str = Header(include_in_schema=False),  # noqa: B008
+        x_request_logger_name: str = Header(include_in_schema=False)  # noqa: B008
     ) -> None:
         """
         Функция для ограничения числа запросов в минуту.
