@@ -38,6 +38,12 @@ class AsyncPGClient(AbstractDBClient):
             return await self.session.fetch_all(query)
         return await self.session.execute(query)
 
+    async def __aenter__(self):
+        await self.start()
+
+    async def __aexit__(self, exc_type, exc, tb):
+        await self.stop()
+
 
 db = AsyncPGClient()
 
