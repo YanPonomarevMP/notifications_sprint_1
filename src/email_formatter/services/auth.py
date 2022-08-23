@@ -11,21 +11,26 @@ from utils.aiohttp_session import get_session
 
 class AuthService():
 
+    def __init__(self):
+        self.address = f'http://{config.auth_api.host}:{config.auth_api.port}'
+        aiohttp_session.session = aiohttp.ClientSession()
+
     async def get_email_by_id(self, email_id: UUID, x_request_id: str):
+
+        url = f'{self.address}{config.auth_api.url_get_email}/{email_id}'
         headers = {
             'Authorization': config.auth_api.access_token.get_secret_value(),
             'X-Request-Id': x_request_id
         }
-        aiohttp_session.session = aiohttp.ClientSession()
 
-        session = await get_session()
-        url = f'http://{config.auth_api.host}:{config.auth_api.port}{config.auth_api.url_get_email}/{email_id}'  # noqa: WPS237
+        async with await get_session() as session:
+            result = await session.get(url, headers=headers)
 
-        response = await session.get(url, headers=headers)
-        if response.status != http.ok.code:
-            logger.error(f'{http.forbidden.message} email with id %s', email_id)
+        if result.status != http.ok.code:  # TODO: Не красиво, что http из другого сервиса.
+            logger.error(f'Not Found email with id %s', email_id)
             return None
-        return await response.json()
+
+        return await result.json()
 
 
 logger = logging.getLogger(__name__)

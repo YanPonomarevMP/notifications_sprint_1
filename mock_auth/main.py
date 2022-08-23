@@ -1,10 +1,9 @@
 # Flake8: noqa
 # type: ignore
 """Модуль содержит псевдо аут (мок) сервер."""
-from uuid import UUID
 
 import uvicorn
-from fastapi import FastAPI, Header, Body
+from fastapi import FastAPI, Header
 
 app = FastAPI()
 
@@ -38,10 +37,11 @@ async def email(
     print()
     print('email_id', email_id)
 
+    # TODO: С этим надо что-то сделать, нельзя это оставлять так.
     return {
         'email': 'vladasabelnikova@yandex.ru',
         'name': 'vlada',
-        'receive_notifications': True
+        'groups': ['detectives', 'melodramas']
     }
 
 
