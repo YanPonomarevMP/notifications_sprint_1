@@ -61,6 +61,7 @@ class SettingsAuthAPI(BaseSettings):
     port: int = vault.get_secret('auth_api_port')
     url_check_token: str = vault.get_secret('url_check_token')
     access_token: SecretStr = vault.get_secret('auth_api_access_token')
+    url_get_email: str = vault.get_secret('url_get_email')
 
 
 class SettingsJaeger(BaseSettings):

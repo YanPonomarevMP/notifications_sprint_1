@@ -9,7 +9,10 @@ from email_formatter.services.email_formatter import email_formatter_service
 
 
 async def main():
-    result = await email_formatter_service.get_data(UUID('8aeb94b9-5f1d-42bf-8beb-54a045440474'))
+    result = await email_formatter_service.get_data(
+        UUID('8aeb94b9-5f1d-42bf-8beb-54a045440474'),
+        '124567'
+    )
     print(result)
 
 

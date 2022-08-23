@@ -3,15 +3,20 @@ from typing import Optional, Union
 from uuid import UUID
 
 from email_formatter.models.all_data import AllData
+from email_formatter.services.auth import auth_service
 from email_formatter.services.pg import db_service
 
 
 class EmailFormatterService:
 
-    async def get_data(self, notification_id: Union[UUID, str]) -> AllData:
-        result = AllData()
+    async def get_data(
+        self,
+        notification_id: Union[UUID, str],
+        x_request_id: str
+    ) -> AllData:
+        # await db_service.mark_as_passed_to_handler(notification_id=notification_id)
 
-        await db_service.mark_as_passed_to_handler(notification_id=notification_id)
+        result = AllData()
         raw_data = await db_service.get_raw_data_by_id(notification_id=notification_id)
 
         if raw_data:
@@ -20,7 +25,8 @@ class EmailFormatterService:
 
             if template:
                 result.template = template
-                # email = await auth_service.get_email_by_id(email_id=destination_id)
+                email = await auth_service.get_email_by_id(email_id=raw_data.destination_id, x_request_id=x_request_id)
+                result.email = email
 
         return result
 

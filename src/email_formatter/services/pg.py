@@ -1,3 +1,8 @@
+# TODO: Навести красоту на логгеры.
+"""
+Модуль содержит сервис для работы с Postgres.
+Уже высокоуровневая бизнес логика.
+"""
 import logging
 from typing import Optional, Union
 from uuid import UUID
@@ -14,33 +19,68 @@ from email_formatter.models.data_from_db import RawDataModel
 
 class DBService:
 
+    """Класс для высокоуровневой работы с PG."""
+
     def __init__(self, database: AbstractDBClient) -> None:
+        """
+        Конструктор.
+
+        Args:
+            database: интерфейс для низкоуровневой работы с БД.
+        """
         self.db = database
 
     async def get_raw_data_by_id(self, notification_id: Union[UUID, str]) -> Optional[RawDataModel]:
+        """
+        Метод достаёт «сырые» данные по notification_id
+
+        Args:
+            notification_id: id сообщения
+
+        Returns:
+            Вернёт pydantic модель RawDataModel.
+        """
         query = self._get_query_select_raw_data(notification_id)
         async with self.db:
             result = await self.db.execute(query)
 
         if result:
             row, = result
+            logger.info('Received data from single_emails table with id %s', notification_id)
             return RawDataModel(**row._mapping)
 
         logger.error('Failed to get data from single_emails table with id %s', notification_id)
         return None
 
     async def get_template_by_id(self, template_id: Union[UUID, str]) -> Optional[str]:
+        """
+        Метод достаёт шаблон по template_id.
+
+        Args:
+            template_id: id шаблона
+
+        Returns:
+            Вернёт HTML строку-шаблон.
+        """
         query = self._get_query_select_template_by_id(template_id)
         async with self.db:
             result = await self.db.execute(query)
 
         if result:
-            return result.template
+            row, = result
+            logger.info('Received data from html_templates table with id %s', template_id)
+            return row.template
 
         logger.error('Failed to get data from html_templates table with id %s', template_id)
         return None
 
     async def mark_as_passed_to_handler(self, notification_id: Union[UUID, str]) -> None:
+        """
+        Метод проставляет отметку о том, что сообщение взято в обработку (дабы не допустить коллизий).
+
+        Args:
+            notification_id: id сообщения
+        """
         query = self._get_query_mark_as_passed_to_handler(notification_id)
         async with self.db:
             await self.db.execute(query)
@@ -48,6 +88,15 @@ class DBService:
         logger.info('Started processing the message with id %s', notification_id)
 
     def _get_query_select_raw_data(self, notification_id: Union[UUID, str]) -> Select:
+        """
+        Метод формирует SQLAlchemy запрос Select.
+
+        Args:
+            notification_id: id сообщения
+
+        Returns:
+            Вернёт SQLAlchemy запрос.
+        """
         return select(
             SingleEmails.template_id,
             SingleEmails.destination_id,
@@ -61,9 +110,27 @@ class DBService:
         )
 
     def _get_query_select_template_by_id(self, template_id: Union[UUID, str]) -> Select:
+        """
+        Метод формирует SQLAlchemy запрос Select.
+
+        Args:
+            template_id: id шаблона
+
+        Returns:
+            Вернёт SQLAlchemy запрос.
+        """
         return select(HTMLTemplates.template).filter(HTMLTemplates.id == template_id)
 
     def _get_query_mark_as_passed_to_handler(self, notification_id: Union[UUID, str]) -> Update:
+        """
+        Метод формирует SQLAlchemy запрос Update.
+
+        Args:
+            notification_id: id сообщения
+
+        Returns:
+            Вернёт SQLAlchemy запрос.
+        """
         return update(
             SingleEmails
         ).filter(
