@@ -2,14 +2,18 @@ import asyncio
 from uuid import UUID
 from logging import config as logging_config
 
+import aiohttp
+
 from config.logging_settings import LOGGING
 from config.settings import config
-# from db.storage import orm_factory
 from db.storage.orm_factory import AsyncPGClient
 from email_formatter.services.email_formatter import email_formatter_service
+from utils import aiohttp_session
 
 
 async def main():
+    aiohttp_session.session = aiohttp.ClientSession()
+
     result = await email_formatter_service.get_data(
         UUID('8aeb94b9-5f1d-42bf-8beb-54a045440474'),
         '124567',
@@ -19,7 +23,7 @@ async def main():
     if result is None:
         print('Уже было кем-то взято в обработку.')
         return
-    a = await email_formatter_service.render_html(result.template, result.user_data.dict())
+    # a = await email_formatter_service.render_html(result.template, result.user_data.dict())
     print(result)
 
 

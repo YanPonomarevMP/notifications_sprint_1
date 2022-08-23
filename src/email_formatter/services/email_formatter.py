@@ -1,7 +1,11 @@
+"""
+Модуль содержит интерфейс для работы с сервисом форматирования email уведомлений.
+В его обязанности входит получать данные о пользователе из разных мест и скрещивать их с шаблоном.
+"""
 from typing import Optional, Union
 from uuid import UUID
 
-from jinja2 import Environment, BaseLoader
+from jinja2 import Environment
 from pydantic import SecretStr
 
 from email_formatter.models.all_data import AllData, AuthData
@@ -19,7 +23,6 @@ class EmailFormatterService:
         x_request_id: str,
         authorization: SecretStr
     ) -> Optional[AllData]:
-
         """
         Метод достаёт данные.
 
@@ -31,10 +34,14 @@ class EmailFormatterService:
         Returns:
             Вернёт pydantic модель AuthData, или None, если данное сообщение уже кем-то обрабатывается.
         """
-        # проставим отметку, что сообщение принято в обработку, заодно убедимся, что мы первые ща него взялись.
-        first_time = await db_service.mark_as_passed_to_handler(notification_id=notification_id)
+        success = await db_service.mark_as_passed_to_handler(notification_id=notification_id)
 
-        if not first_time:  # TODO: С этим нужно что-то делать.
+        # Нам нужно обрабатывать сообщение, только если никто до нас его еще не взял его в обработку.
+        # Метод db_service.mark_as_passed_to_handler решает сразу две задачи в одном запросе к БД:
+        #
+        # 1. Проставляет отметку, что мы приняли сообщение в обработку
+        # 2. Если отметка уже стоит — скажет нам, что НЕ надо обрабатывать.
+        if not success:  # Мы не смогли проставить отметку, а значит — кто-то другой уже взял.
             return None
 
         result = AllData()
@@ -45,7 +52,7 @@ class EmailFormatterService:
             result.template = await db_service.get_template_by_id(template_id=raw_data.template_id)
 
             user_data = await auth_service.get_user_data_by_id(
-                email_id=raw_data.destination_id,
+                destination_id=raw_data.destination_id,
                 x_request_id=x_request_id,
                 authorization=authorization
             )
@@ -53,7 +60,17 @@ class EmailFormatterService:
 
         return result
 
-    async def render_html(self, template: str, data: dict):
+    async def render_html(self, template: str, data: dict) -> str:
+        """
+        Метод создаёт HTML на основе шаблона и данных.
+
+        Args:
+            template: шаблон
+            data: данные для шаблона
+
+        Returns:
+            Вернёт сгенерированную строку HTML.
+        """
         tmpl = Environment(enable_async=True).from_string(template)
         return await tmpl.render_async(**data)
 

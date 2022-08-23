@@ -1,23 +1,43 @@
+"""Модуль содержит интерфейс для работы с Auth сервисом."""
 import logging
+from typing import Optional
 from uuid import UUID
 
-import aiohttp
 from pydantic import SecretStr
 
 from config.settings import config
-from notifier_api.models.http_responses import http
-from utils import aiohttp_session
+from email_formatter.models.http_responses import http
 from utils.aiohttp_session import get_session
 
 
-class AuthService():
+class AuthService:
 
-    def __init__(self):
+    """Класс с интерфейсом для работы с Auth."""
+
+    def __init__(self) -> None:
+
+        """Конструктор."""
+
         self.address = f'http://{config.auth_api.host}:{config.auth_api.port}'
 
-    async def get_user_data_by_id(self, email_id: UUID, x_request_id: str, authorization: SecretStr):
-        aiohttp_session.session = aiohttp.ClientSession()  # TODO: Точно тут?
-        url = f'{self.address}{config.auth_api.url_get_email}/{email_id}'
+    async def get_user_data_by_id(
+        self,
+        destination_id: UUID,
+        x_request_id: str,
+        authorization: SecretStr
+    ) -> Optional[dict]:
+        """
+        Метод достаёт пользовательские данные из Auth.
+
+        Args:
+            destination_id: id пользователя, который нам нужен
+            x_request_id: id запроса
+            authorization: access токен доступа (пользовательские данные из Auth нельзя давать кому попало)
+
+        Returns:
+            Вернёт имя пользователя, почту и группы, в которых пользователь состоит.
+        """
+        url = f'{self.address}{config.auth_api.url_get_email}/{destination_id}'
         headers = {
             'Authorization': authorization.get_secret_value(),
             'X-Request-Id': x_request_id
@@ -26,8 +46,8 @@ class AuthService():
         async with await get_session() as session:
             result = await session.get(url, headers=headers)
 
-        if result.status != http.ok.code:  # TODO: Не красиво, что http из другого сервиса.
-            logger.error(f'Not Found email with id %s', email_id)
+        if result.status != http.ok.code:
+            logger.error(f'Not Found email with id %s', destination_id)
             return None
 
         return await result.json()

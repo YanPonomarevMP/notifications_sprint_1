@@ -144,7 +144,8 @@ class DBService:
         ).filter(
             and_(
                 SingleEmails.id == notification_id,
-                SingleEmails.passed_to_handler_at == None
+                SingleEmails.passed_to_handler_at == None,
+                SingleEmails.deleted_at == None
             )
         ).values(
             passed_to_handler_at=func.now()
