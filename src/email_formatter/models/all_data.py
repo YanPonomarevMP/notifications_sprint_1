@@ -1,11 +1,22 @@
-from typing import Optional
+"""Модуль содержит pydantic модели."""
+from typing import Optional, List
+
+from email_formatter.models.base_config import BaseConfigModel
 
 
-from email_formatter.models.base_orjson import BaseOrjson
+class AuthData(BaseConfigModel):
 
+    """Все данные о пользователе, приходящие из Auth."""
 
-class AllData(BaseOrjson):
-
+    name: Optional[str]
     email: Optional[str]
+    groups: Optional[List[str]]
+
+
+class AllData(BaseConfigModel):
+
+    """Все данные, которые сервис юзает."""
+
+    user_data: Optional[AuthData]
     template: Optional[str]
     message: Optional[dict]

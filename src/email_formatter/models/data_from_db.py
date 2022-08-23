@@ -1,14 +1,14 @@
 """Модель содержит pydantic модели для RawData из DB."""
-from typing import Union, Optional
+from typing import Union
 from uuid import UUID
 
 import orjson
 from pydantic import validator
 
-from email_formatter.models.base_orjson import BaseOrjson
+from email_formatter.models.base_config import BaseConfigModel
 
 
-class RawDataModel(BaseOrjson):
+class RawDataModel(BaseConfigModel):
 
     """Класс с «сырыми» данными из PG."""
 
@@ -28,8 +28,3 @@ class RawDataModel(BaseOrjson):
             Вернёт словарь.
         """
         return orjson.loads(message)
-
-
-class TemplateModel(BaseOrjson):
-
-    template: str
