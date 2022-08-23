@@ -19,6 +19,7 @@ async def main():
     if result is None:
         print('Уже было кем-то взято в обработку.')
         return
+    a = await email_formatter_service.render_html(result.template, result.user_data.dict())
     print(result)
 
 

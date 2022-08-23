@@ -1,16 +1,17 @@
-import logging
 from typing import Optional, Union
 from uuid import UUID
 
+from jinja2 import Environment, BaseLoader
 from pydantic import SecretStr
 
-from config.settings import config
 from email_formatter.models.all_data import AllData, AuthData
 from email_formatter.services.auth import auth_service
 from email_formatter.services.pg import db_service
 
 
 class EmailFormatterService:
+
+    """Класс с интерфейсом для Email Formatter Service."""
 
     async def get_data(
         self,
@@ -19,6 +20,18 @@ class EmailFormatterService:
         authorization: SecretStr
     ) -> Optional[AllData]:
 
+        """
+        Метод достаёт данные.
+
+        Args:
+            notification_id: id сообщения
+            x_request_id: id запроса
+            authorization: access токен сервиса
+
+        Returns:
+            Вернёт pydantic модель AuthData, или None, если данное сообщение уже кем-то обрабатывается.
+        """
+        # проставим отметку, что сообщение принято в обработку, заодно убедимся, что мы первые ща него взялись.
         first_time = await db_service.mark_as_passed_to_handler(notification_id=notification_id)
 
         if not first_time:  # TODO: С этим нужно что-то делать.
@@ -40,8 +53,9 @@ class EmailFormatterService:
 
         return result
 
-    async def render_html(self):
-        ...
+    async def render_html(self, template: str, data: dict):
+        tmpl = Environment(enable_async=True).from_string(template)
+        return await tmpl.render_async(**data)
 
     async def put_data(self):
         ...
