@@ -2,6 +2,7 @@ import logging
 from uuid import UUID
 
 import aiohttp
+from pydantic import SecretStr
 
 from config.settings import config
 from notifier_api.models.http_responses import http
@@ -13,13 +14,12 @@ class AuthService():
 
     def __init__(self):
         self.address = f'http://{config.auth_api.host}:{config.auth_api.port}'
-        aiohttp_session.session = aiohttp.ClientSession()
 
-    async def get_email_by_id(self, email_id: UUID, x_request_id: str):
-
+    async def get_user_data_by_id(self, email_id: UUID, x_request_id: str, authorization: SecretStr):
+        aiohttp_session.session = aiohttp.ClientSession()  # TODO: Точно тут?
         url = f'{self.address}{config.auth_api.url_get_email}/{email_id}'
         headers = {
-            'Authorization': config.auth_api.access_token.get_secret_value(),
+            'Authorization': authorization.get_secret_value(),
             'X-Request-Id': x_request_id
         }
 

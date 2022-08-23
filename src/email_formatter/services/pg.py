@@ -14,7 +14,7 @@ from db.models.email_single_notifications import SingleEmails
 from db.models.email_templates import HTMLTemplates
 from db.storage.abstract_classes import AbstractDBClient
 from db.storage.orm_factory import db
-from email_formatter.models.data_from_db import RawDataModel
+from email_formatter.models.data_from_db import RawDataDB
 
 
 class DBService:
@@ -30,7 +30,7 @@ class DBService:
         """
         self.db = database
 
-    async def get_raw_data_by_id(self, notification_id: Union[UUID, str]) -> Optional[RawDataModel]:
+    async def get_raw_data_by_id(self, notification_id: Union[UUID, str]) -> Optional[RawDataDB]:
         """
         Метод достаёт «сырые» данные по notification_id
 
@@ -40,14 +40,14 @@ class DBService:
         Returns:
             Вернёт pydantic модель RawDataModel.
         """
-        query = self._get_query_select_raw_data(notification_id)
+        query = self._get_query_select_raw_data(notification_id)  # SQLAlchemy query очень громоздко выглядит.
         async with self.db:
             result = await self.db.execute(query)
 
         if result:
             row, = result
             logger.info('Received data from single_emails table with id %s', notification_id)
-            return RawDataModel(**row._mapping)
+            return RawDataDB(**row._mapping)
 
         logger.error('Failed to get data from single_emails table with id %s', notification_id)
         return None
@@ -62,7 +62,7 @@ class DBService:
         Returns:
             Вернёт HTML строку-шаблон.
         """
-        query = self._get_query_select_template_by_id(template_id)
+        query = self._get_query_select_template_by_id(template_id)  # SQLAlchemy query очень громоздко выглядит.
         async with self.db:
             result = await self.db.execute(query)
 
@@ -74,18 +74,27 @@ class DBService:
         logger.error('Failed to get data from html_templates table with id %s', template_id)
         return None
 
-    async def mark_as_passed_to_handler(self, notification_id: Union[UUID, str]) -> None:
+    async def mark_as_passed_to_handler(self, notification_id: Union[UUID, str]) -> bool:
         """
         Метод проставляет отметку о том, что сообщение взято в обработку (дабы не допустить коллизий).
 
+        И возвращает ответ на вопрос:
+        была ли запись взята первый раз, или её уже кто-то начал обрабатывать перед нами.
+
         Args:
             notification_id: id сообщения
-        """
-        query = self._get_query_mark_as_passed_to_handler(notification_id)
-        async with self.db:
-            await self.db.execute(query)
 
-        logger.info('Started processing the message with id %s', notification_id)
+        Returns:
+            Вернёт ответ на вопрос: была ли запись взята первый раз, или её уже кто-то начал обрабатывать перед нами.
+        """
+        query = self._get_query_mark_as_passed_to_handler(notification_id)  # SQLAlchemy query очень громоздко выглядит.
+        async with self.db:
+            result = await self.db.execute(query)
+
+        if result is not None:
+            logger.info('Started processing the message with id %s', notification_id)
+
+        return bool(result)
 
     def _get_query_select_raw_data(self, notification_id: Union[UUID, str]) -> Select:
         """
@@ -104,7 +113,6 @@ class DBService:
         ).filter(
             and_(
                 SingleEmails.deleted_at == None,
-                SingleEmails.passed_to_handler_at == None,
                 SingleEmails.id == notification_id
             )
         )
@@ -134,9 +142,14 @@ class DBService:
         return update(
             SingleEmails
         ).filter(
-            SingleEmails.id == notification_id
+            and_(
+                SingleEmails.id == notification_id,
+                SingleEmails.passed_to_handler_at == None
+            )
         ).values(
             passed_to_handler_at=func.now()
+        ).returning(
+            SingleEmails.id
         )
 
 

@@ -8,9 +8,9 @@ from pydantic import validator
 from email_formatter.models.base_config import BaseConfigModel
 
 
-class RawDataModel(BaseConfigModel):
+class RawDataDB(BaseConfigModel):
 
-    """Класс с «сырыми» данными из PG."""
+    """Класс с «сырыми» данными из DB."""
 
     template_id: UUID
     destination_id: UUID
