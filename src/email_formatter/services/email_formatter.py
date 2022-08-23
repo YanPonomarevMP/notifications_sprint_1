@@ -1,15 +1,28 @@
+import logging
+from typing import Optional, Union
+from uuid import UUID
+
+from email_formatter.models.all_data import AllData
 from email_formatter.services.pg import db_service
 
 
 class EmailFormatterService:
 
-    async def get_data(self, notification_id):
-        # TODO: Нам бы прописать логику, если данных никаких не нашли.
-        await db_service.put_passed_to_handler_at(notification_id=notification_id)
+    async def get_data(self, notification_id: Union[UUID, str]) -> AllData:
+        result = AllData()
+
+        await db_service.mark_as_passed_to_handler(notification_id=notification_id)
         raw_data = await db_service.get_raw_data_by_id(notification_id=notification_id)
-        template = await db_service.get_template_by_id(template_id=raw_data.template_id)
-        # email = await auth_service.get_email_by_id(email_id=destination_id)
-        return raw_data, template  # , email
+
+        if raw_data:
+            result.message = raw_data.message
+            template = await db_service.get_template_by_id(template_id=raw_data.template_id)
+
+            if template:
+                result.template = template
+                # email = await auth_service.get_email_by_id(email_id=destination_id)
+
+        return result
 
     async def render_html(self):
         ...

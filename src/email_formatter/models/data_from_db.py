@@ -1,5 +1,5 @@
 """Модель содержит pydantic модели для RawData из DB."""
-from typing import Union
+from typing import Union, Optional
 from uuid import UUID
 
 import orjson
