@@ -3,7 +3,7 @@
 """
 from uuid import uuid4
 
-from sqlalchemy import Table, Column, Integer, DateTime, func, String
+from sqlalchemy import Table, Column, Integer, DateTime, func, String, Text
 from sqlalchemy.dialects.postgresql import UUID, JSON
 
 from db.db_init import Base
@@ -24,4 +24,4 @@ class SingleEmails(Base):
     deleted_at = Column(DateTime(timezone=True))
     passed_to_handler_at = Column(DateTime(timezone=True))
     sent_at = Column(DateTime(timezone=True))
-    sent_result = Column(String)
+    sent_result = Column(Text)

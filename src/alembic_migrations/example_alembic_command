@@ -1,0 +1,5 @@
+Создать миграцию:
+poetry run alembic revision --message="Initial" --autogenerate
+
+Накатить миграцию:
+poetry run alembic upgrade head
