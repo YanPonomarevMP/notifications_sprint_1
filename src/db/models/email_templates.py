@@ -14,6 +14,7 @@ class HTMLTemplates(Base):
     __table_args__ = {'schema': 'email'}
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4, unique=True, nullable=False)
+    title = Column(Text, nullable=False)
     template = Column(Text, nullable=False)
     created_at = Column(DateTime(timezone=True), default=func.now())
-    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+    deleted_at = Column(DateTime(timezone=True))
