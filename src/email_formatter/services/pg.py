@@ -21,18 +21,17 @@ class DBService:
         async with self.db:
             result, = await self.db.execute(query)
 
-        # Результат можно, конечно, и в ручную перебрать, но выйдет громоздко.
         return RawDataModel(**result._mapping)
 
-    async def get_template_by_id(self, template_id: UUID) -> TemplateModel:
+    async def get_template_by_id(self, template_id: UUID) -> str:
         query = self._get_query_select_template_by_id(template_id)
         async with self.db:
             result, = await self.db.execute(query)
 
-        return parse_obj_as(TemplateModel, result[0]._mapping)  # TODO: А нужна ли тут модель вообще?
+        return result.template
 
-    async def put_passed_to_handled_at(self, notification_id):
-        query = self._get_query_update_passed_to_handled_at(notification_id)
+    async def put_passed_to_handler_at(self, notification_id):
+        query = self._get_query_update_passed_to_handler_at(notification_id)
         async with self.db:
             await self.db.execute(query)
 
@@ -51,13 +50,13 @@ class DBService:
     def _get_query_select_template_by_id(self, template_id):
         return select(HTMLTemplates.template).filter(HTMLTemplates.id == template_id)
 
-    def _get_query_update_passed_to_handled_at(self, notification_id):
+    def _get_query_update_passed_to_handler_at(self, notification_id):
         return update(
             SingleEmails
         ).filter(
             SingleEmails.id == notification_id
         ).values(
-            passed_to_handled_at=func.now()
+            passed_to_handler_at=func.now()
         )
 
 
