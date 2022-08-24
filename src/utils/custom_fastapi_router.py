@@ -40,9 +40,7 @@ class LoggedRoute(APIRoute):
             # поэтому мы создадим имя логгера из url запроса
             logger_name, request_log_message = await parse_request_for_logging(request)
 
-            # Дополнительные заголовки нужны для логирования текущего запроса
-            # на уровне Depends функций, выполняющих предварительную обработку (before request),
-            # например, проверку авторизации.
+            # Дополнительные заголовки нужны для логирования текущего запроса.
             await set_headers_for_logging(request, request_log_message, logger_name)
 
             response: Response = await original_route_handler(request)

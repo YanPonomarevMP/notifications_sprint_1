@@ -21,7 +21,7 @@ class IdempotencyKeyChecker(BaseOrjson):
     idempotency_key: Optional[UUID]
 
 
-class Body(BaseOrjson):
+class HtmlTemplate(BaseOrjson):
 
     """Данные, поступившие от клиента."""
 
@@ -60,4 +60,4 @@ class Body(BaseOrjson):
                 status_code=http.request_validation_error.code,
                 detail=f'{err.msg} - {err.source}'
             )
-        return good_uuid.id
+        return good_uuid.idempotency_key

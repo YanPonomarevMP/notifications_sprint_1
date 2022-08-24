@@ -52,7 +52,7 @@ async def http_exception_handler(request: Request, exception: StarletteHTTPExcep
     log = await get_logging_data(request.scope['headers'])
 
     logger = getLogger(log.logger_name)
-    logger.error(f'{exception.detail} {log.message} {exception.status_code}')
+    logger.error(f'{exception.detail} | {log.message} {exception.status_code}')
 
     return ORJSONResponse(
         {'detail': exception.detail},
