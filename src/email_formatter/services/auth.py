@@ -38,8 +38,8 @@ class AuthService:
         url = f'{self.address}{config.auth_api.url_get_email}/{destination_id}'
         headers = {'X-Request-Id': x_request_id}
 
-        async with await get_session() as session:
-            result = await session.get(url, headers=headers)
+        session = await get_session()
+        result = await session.get(url, headers=headers)
 
         if result.status != http.ok.code:
             logger.error(f'Not Found email with id %s', destination_id)
