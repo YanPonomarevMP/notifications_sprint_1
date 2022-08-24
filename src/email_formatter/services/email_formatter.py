@@ -18,17 +18,12 @@ class EmailFormatterService:
 
     """Класс с интерфейсом для Email Formatter Service."""
 
-    async def get_data(
-        self,
-        notification_id: Union[UUID, str],
-        x_request_id: str,
-    ) -> Optional[AllData]:
+    async def get_data(self, notification_id: Union[UUID, str]) -> Optional[AllData]:
         """
         Метод достаёт данные.
 
         Args:
             notification_id: id сообщения
-            x_request_id: id запроса
 
         Returns:
             Вернёт pydantic модель AuthData, или None, если данное сообщение уже кем-то обрабатывается.
@@ -50,10 +45,7 @@ class EmailFormatterService:
             result.message = raw_data.message
             result.template = await db_service.get_template_by_id(template_id=raw_data.template_id)
 
-            user_data = await auth_service.get_user_data_by_id(
-                destination_id=raw_data.destination_id,
-                x_request_id=x_request_id,
-            )
+            user_data = await auth_service.get_user_data_by_id(destination_id=raw_data.destination_id)
             result.user_data = AuthData(**user_data)
 
         return result
