@@ -24,7 +24,6 @@ class AuthService:
         self,
         destination_id: UUID,
         x_request_id: str,
-        authorization: SecretStr
     ) -> Optional[dict]:
         """
         Метод достаёт пользовательские данные из Auth.
@@ -32,16 +31,12 @@ class AuthService:
         Args:
             destination_id: id пользователя, который нам нужен
             x_request_id: id запроса
-            authorization: access токен доступа (пользовательские данные из Auth нельзя давать кому попало)
 
         Returns:
             Вернёт имя пользователя, почту и группы, в которых пользователь состоит.
         """
         url = f'{self.address}{config.auth_api.url_get_email}/{destination_id}'
-        headers = {
-            'Authorization': authorization.get_secret_value(),
-            'X-Request-Id': x_request_id
-        }
+        headers = {'X-Request-Id': x_request_id}
 
         async with await get_session() as session:
             result = await session.get(url, headers=headers)

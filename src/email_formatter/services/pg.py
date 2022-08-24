@@ -91,7 +91,7 @@ class DBService:
         async with self.db:
             result = await self.db.execute(query)
 
-        if result is not None:
+        if result is not None:  # Если None — метку не удалось поставить, а значит она уже стоит.
             logger.info('Started processing the message with id %s', notification_id)
 
         return bool(result)

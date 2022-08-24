@@ -9,17 +9,6 @@ from security.vault_app_config import vault
 logging_config.dictConfig(LOGGING)
 
 
-class RabbitAlifeQueues(BaseSettings):
-
-    """
-    Настройки «живых» очередей.
-    Тут хранятся имена очередей, которые будут слушать consumer-ы.
-    """
-
-    queue_raw_single_messages: str = vault.get_secret('queue_raw_single_messages')
-    queue_raw_group_messages: str = vault.get_secret('queue_raw_group_messages')
-
-
 class RabbitSettings(BaseSettings):
 
     """Настройки RabbitMQ."""
@@ -35,7 +24,10 @@ class RabbitSettings(BaseSettings):
     exchange_retry: str = vault.get_secret('exchange_retry')
     default_message_ttl_ms: int = vault.get_secret('default_message_ttl_ms')
     max_retry_count: int = vault.get_secret('max_retry_count')
-    alife_queues: RabbitAlifeQueues = RabbitAlifeQueues()
+
+    queue_raw_single_messages: str = vault.get_secret('queue_raw_single_messages')
+    queue_raw_group_messages: str = vault.get_secret('queue_raw_group_messages')
+    queue_formatted_single_messages: str = vault.get_secret('queue_formatted_single_messages')
 
 
 class PostgresSettings(BaseSettings):
