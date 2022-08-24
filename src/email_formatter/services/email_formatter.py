@@ -78,16 +78,38 @@ class EmailFormatterService:
         )
 
     def data_is_valid(self, data: Optional[AllData]) -> bool:
+        """
+        Метод проверяет валидность данных.
+        Все ли данные на месте, или может что-то наш сервис найти не сумел?
+
+        Args:
+            data: данные, которые нужно проверить
+
+        Returns:
+            Вернёт ответ на вопрос: Все ли данные на месте, или может что-то наш сервис найти не сумел?
+        """
         if data is None:
             return False
         return all(data.dict()) and all(data.user_data.dict())
 
-    def can_send(self, user_group, message_group):
+    def can_send(self, user_group: list, message_group: str) -> bool:
+        """
+        Метод сверяет группу сообщения с группами, в которых состоит пользователь.
+        Если сообщение срочное —
+        message_group будет равна None и в этом случае сообщение отправится,
+        а иначе будем смотреть совпадает ли группа сообщения с одной из групп пользователя.
 
+        Args:
+            user_group:
+            message_group:
+
+        Returns:
+            Вернёт ответ на вопрос можем ли м посылать данное сообщение пользователю из исходя из групп.
+        """
         if message_group is None:
             return True
 
-        return bool(set(user_group) & set(message_group))
+        return message_group in user_group
 
 
 email_formatter_service = EmailFormatterService()
