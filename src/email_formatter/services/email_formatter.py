@@ -5,6 +5,7 @@
 from typing import Optional, Union
 from uuid import UUID
 
+from aio_pika.abc import AbstractIncomingMessage
 from jinja2 import Environment
 from pydantic import SecretStr
 
@@ -74,10 +75,22 @@ class EmailFormatterService:
         tmpl = Environment(enable_async=True).from_string(template)
         return await tmpl.render_async(**data)
 
+    async def all_data_is_there(self, data: AllData) -> bool:
+        """
+        Метод убеждается, что все необходимые данные мы получили.
+
+        Args:
+            data: Pydantic модель AllData (это совокупность данных, которые наш сервис раздобыл)
+
+        Returns:
+            Вернёт ответ на вопрос все ли данные есть.
+        """
+        return all(data.dict()) and all(data.user_data.dict())
+
     async def put_data(self):
         ...
 
-    async def callback(self, message):
+    async def callback(self, message: AbstractIncomingMessage):
         ...
 
     async def start(self):
