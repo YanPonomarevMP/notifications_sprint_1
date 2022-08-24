@@ -1,4 +1,3 @@
-# TODO: Навести красоту на логгеры.
 """
 Модуль содержит сервис для работы с Postgres.
 Уже высокоуровневая бизнес логика.
@@ -15,6 +14,7 @@ from db.models.email_templates import HTMLTemplates
 from db.storage.abstract_classes import AbstractDBClient
 from db.storage.orm_factory import db
 from email_formatter.models.data_from_db import RawDataDB
+from email_formatter.models.log import log_names
 
 
 class DBService:
@@ -45,10 +45,10 @@ class DBService:
 
         if result:
             row, = result
-            logger.info('Received data from single_emails table with id %s', notification_id)
+            logger.info(log_names.info.success_get, notification_id, 'single_emails table')
             return RawDataDB(**row._mapping)
 
-        logger.error('Failed to get data from single_emails table with id %s', notification_id)
+        logger.error(log_names.error.failed_get, notification_id, 'single_emails table')
         return None
 
     async def get_template_by_id(self, template_id: Union[UUID, str]) -> Optional[str]:
@@ -66,10 +66,10 @@ class DBService:
 
         if result:
             row, = result
-            logger.info('Received data from html_templates table with id %s', template_id)
+            logger.info(log_names.info.success_get, template_id, 'html_templates table')
             return row.template
 
-        logger.error('Failed to get data from html_templates table with id %s', template_id)
+        logger.error(log_names.error.failed_get, template_id, 'html_templates table')
         return None
 
     async def mark_as_passed_to_handler(self, notification_id: Union[UUID, str]) -> bool:
@@ -89,7 +89,7 @@ class DBService:
         result = await self.db.execute(query)
 
         if result is not None:  # Если None — метку не удалось поставить, а значит она уже стоит.
-            logger.info('Started processing the message with id %s', notification_id)
+            logger.info(log_names.info.accepted, f'message with id {notification_id}')
 
         return bool(result)
 
@@ -151,5 +151,5 @@ class DBService:
         )
 
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger('email_formatter.db_service')
 db_service = DBService(database=db)

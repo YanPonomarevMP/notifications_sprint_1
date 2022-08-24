@@ -3,10 +3,9 @@ import logging
 from typing import Optional
 from uuid import UUID
 
-from pydantic import SecretStr
-
 from config.settings import config
 from email_formatter.models.http_responses import http
+from email_formatter.models.log import log_names
 from utils.aiohttp_session import get_session
 
 
@@ -42,11 +41,11 @@ class AuthService:
         result = await session.get(url, headers=headers)
 
         if result.status != http.ok.code:
-            logger.error(f'Not Found email with id %s', destination_id)
+            logger.error(log_names.error.failed_get, destination_id, 'Auth service')
             return None
 
         return await result.json()
 
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger('auth_service')
 auth_service = AuthService()
