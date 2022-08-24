@@ -41,8 +41,7 @@ class DBService:
             Вернёт pydantic модель RawDataModel.
         """
         query = self._get_query_select_raw_data(notification_id)  # SQLAlchemy query очень громоздко выглядит.
-        async with self.db:
-            result = await self.db.execute(query)
+        result = await self.db.execute(query)
 
         if result:
             row, = result
@@ -63,8 +62,7 @@ class DBService:
             Вернёт HTML строку-шаблон.
         """
         query = self._get_query_select_template_by_id(template_id)  # SQLAlchemy query очень громоздко выглядит.
-        async with self.db:
-            result = await self.db.execute(query)
+        result = await self.db.execute(query)
 
         if result:
             row, = result
@@ -88,8 +86,7 @@ class DBService:
             Вернёт ответ на вопрос: была ли запись взята первый раз, или её уже кто-то начал обрабатывать перед нами.
         """
         query = self._get_query_mark_as_passed_to_handler(notification_id)  # SQLAlchemy query очень громоздко выглядит.
-        async with self.db:
-            result = await self.db.execute(query)
+        result = await self.db.execute(query)
 
         if result is not None:  # Если None — метку не удалось поставить, а значит она уже стоит.
             logger.info('Started processing the message with id %s', notification_id)

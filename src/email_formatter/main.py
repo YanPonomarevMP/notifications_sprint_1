@@ -7,6 +7,7 @@ from aio_pika.abc import AbstractIncomingMessage
 from config.logging_settings import LOGGING
 from config.settings import config
 from db.message_brokers.rabbit_message_broker import message_broker_factory
+from db.storage import orm_factory
 from email_formatter.models.data_from_queue import DataFromQueue
 from email_formatter.services.email_formatter import email_formatter_service
 from utils import aiohttp_session
@@ -53,17 +54,28 @@ async def callback(message: AbstractIncomingMessage):
         return await message.reject()
 
 
-async def main():
+async def startup():
     headers = {'Authorization': config.auth_api.access_token.get_secret_value()}
     aiohttp_session.session = aiohttp.ClientSession(headers=headers)
     await message_broker_factory.idempotency_startup()
+    await orm_factory.db.start()
     print('случаю вас очень внимательно')
 
+
+async def shutdown():
+    print('закончил слушать')
+    await aiohttp_session.session.close()
+    await orm_factory.db.stop()
+
+
+async def main():
+
+    await startup()
     await message_broker_factory.consume(
         queue_name=config.rabbit_mq.queue_raw_single_messages,
         callback=callback
     )
-    await aiohttp_session.session.close()
+    await shutdown()
 
 
 logging_config.dictConfig(LOGGING)
