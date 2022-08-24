@@ -48,6 +48,7 @@ async def callback(message: AbstractIncomingMessage):
             message_headers=headers
         )
         print('мы всё записали')
+        return await message.ack()
 
     except Exception as e:
         print('что-то пошло не так', e)
