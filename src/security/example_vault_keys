@@ -42,3 +42,5 @@ vault kv put notifications/max_retry_count value=3
 vault kv put notifications/url_check_token value=/v1/back/check_token
 
 vault kv put notifications/url_get_email value=/v1/back/user_data/email
+vault kv put notifications/queue_raw_single_messages value=queue_raw_single_messages
+vault kv put notifications/queue_raw_group_messages value=queue_raw_group_messages
