@@ -10,7 +10,7 @@ from db.storage.abstract_classes import AbstractDBClient
 
 class AsyncPGClient(AbstractDBClient):
     """Класс создаёт сессию для асинхронной работы с Postgres."""
-    def __init__(self):
+    def __init__(self) -> None:
         user = config.pg.login.get_secret_value()
         password = config.pg.password.get_secret_value()
         host = config.pg.host
