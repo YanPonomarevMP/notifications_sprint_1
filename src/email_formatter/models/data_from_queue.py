@@ -18,7 +18,7 @@ class DataFromQueue(BaseConfigModel):
 
     @validator('x_groups')
     def dict_to_list(cls, message: dict) -> Optional[list]:
-        return message['headers'].get('x-groups', None)
+        return message['headers'].get('x-group', None)
 
     @validator('notification_id')
     def byte_to_str(cls, message: bytes) -> str:
