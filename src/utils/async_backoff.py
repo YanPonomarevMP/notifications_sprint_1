@@ -2,6 +2,7 @@
 """Модуль содержит асинхронную функцию backoff."""
 from asyncio import sleep
 from functools import wraps
+from logging import getLogger
 from typing import Union, Callable, Any
 
 from fastapi import HTTPException
@@ -9,11 +10,9 @@ from fastapi import HTTPException
 from notifier_api.models.http_responses import http
 from utils.custom_exceptions import DataBaseError
 
-logger = None
-
-
 def timeout_limiter(
         max_timeout: Union[int, float],
+        logger_name: str,
         start_sleep_time: Union[int, float] = 0.1,
         factor: Union[int, float] = 2,
         border_sleep_time: Union[int, float] = 10
@@ -46,6 +45,8 @@ def timeout_limiter(
         Returns:
             Возвращает функцию, которая и выполняет алгоритм.
         """
+
+        logger = getLogger(logger_name)
 
         @wraps(func)
         async def inner(*args: tuple, **kwargs: dict) -> Any:
@@ -81,10 +82,12 @@ def timeout_limiter(
                 except Exception as error:
 
                     if execution_time < max_timeout:
+                        logger.warning(str(error))
                         await sleep(start_sleep_time)
                         execution_time += start_sleep_time
                         start_sleep_time = min(start_sleep_time * factor, border_sleep_time)
                     else:
+                        logger.error(f'Database connection timeout {str(error)}')
                         raise DataBaseError(
                             db_name=func.__name__,
                             message='Database connection timeout',

@@ -8,6 +8,7 @@ from db.models.email_templates import HTMLTemplates
 from db.storage.orm_factory import get_db, AsyncPGClient
 from notifier_api.models.http_responses import http  # type: ignore
 from notifier_api.models.notifier_html_template import HtmlTemplatesResponse, HtmlTemplatesRequest, HtmlTemplatesQuery
+from notifier_api.services.html_templates_factory import get_html_templates_factory
 from utils.custom_exceptions import DataBaseError
 from utils.custom_fastapi_router import LoggedRoute
 from utils.dependencies import requests_per_minute
@@ -29,22 +30,18 @@ router = APIRouter(
 )
 async def new_template(
     template: HtmlTemplatesRequest,
-    database: AsyncPGClient = Depends(get_db),
+    factory: AsyncPGClient = Depends(get_html_templates_factory),
     idempotency_key: str = Header(description='UUID4'),  # noqa: B008
-    x_request_logger_name: str = Header(include_in_schema=False)
 ) -> HtmlTemplatesResponse:
 
     query_data = HtmlTemplatesQuery(**template.dict())
     query_data.id = idempotency_key
 
-    query = insert(HTMLTemplates).returning(HTMLTemplates.created_at).values(**query_data.dict(exclude={'msg'}))
+    query = insert(HTMLTemplates)
+    query = query.returning(HTMLTemplates.created_at)
+    query = query.values(**query_data.dict(exclude={'msg'}))
     idempotent_query = query.on_conflict_do_nothing(index_elements=['id'])
 
-    try:
-        query_data.msg = await database.execute(idempotent_query)
-    except DataBaseError as error:
-        logger = getLogger(x_request_logger_name)
-        logger.critical(error.message)
-        raise HTTPException(status_code=http.backoff_error.code, detail=http.backoff_error.message)
+    query_data.msg = await factory.execute(idempotent_query)
 
     return query_data

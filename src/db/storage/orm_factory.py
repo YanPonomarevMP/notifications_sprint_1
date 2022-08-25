@@ -26,7 +26,7 @@ class AsyncPGClient(AbstractDBClient):
         """Метод закрывает соединение с БД."""
         await self.session.disconnect()
 
-    @timeout_limiter(max_timeout=10)
+    @timeout_limiter(max_timeout=10, logger_name='db.orm_factory.execute')
     async def execute(self, query: Union[Update, Select, Insert, Delete]):
         """
         Метод выполняет запрос в БД.
