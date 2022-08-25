@@ -34,7 +34,7 @@ async def callback(message: AbstractIncomingMessage) -> None:
             logger.critical(log_names.error.drop_message, f'Already process message or some data is missing')
             return await message.ack()
 
-        if not email_formatter_service.can_send(data_from_service.user_data.groups, data_from_queue.x_groups):
+        if not email_formatter_service.groups_match(data_from_service.user_data.groups, data_from_queue.x_groups):
             logger.critical(log_names.error.drop_message, 'User is not subscribed group and message is not urgent')
             return await message.ack()
 

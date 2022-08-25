@@ -95,7 +95,7 @@ class EmailFormatterService:
             return False
         return all(data.dict()) and all(data.user_data.dict())
 
-    def can_send(self, user_group: list, message_group: str) -> bool:
+    def groups_match(self, user_group: list, message_group: str) -> bool:
         """
         Метод сверяет группу сообщения с группами, в которых состоит пользователь.
         Если сообщение срочное —
@@ -103,8 +103,8 @@ class EmailFormatterService:
         а иначе будем смотреть совпадает ли группа сообщения с одной из групп пользователя.
 
         Args:
-            user_group:
-            message_group:
+            user_group: группы пользователя
+            message_group: группа сообщения
 
         Returns:
             Вернёт ответ на вопрос можем ли посылать данное сообщение пользователю из исходя из групп.
