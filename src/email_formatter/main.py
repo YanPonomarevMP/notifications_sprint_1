@@ -55,39 +55,27 @@ async def callback(message: AbstractIncomingMessage) -> None:  # noqa: WPS231,WP
         notification_id=message.body
     )
 
+    # Сообщение больше допустимого повторно встаёт в очередь после reject.
     if data_from_queue.count_retry > config.rabbit_mq.max_retry_count:
-        # Сообщение больше допустимого повторно встаёт в очередь после reject.
         logger.critical(log_names.error.drop_message, 'Too many repeat inserts in the queue')
         return await message.ack()
 
     transaction = await email_formatter_service.start_transaction(data_from_queue.notification_id)
 
+    # Сообщение уже кем-то взято, значит это сообщение досталось нам по ошибке и обрабатывать его не надо.
     if not transaction:
-        # Сообщение уже кем-то взято, значит это сообщение досталось нам по ошибке и обрабатывать его не надо.
-        logger.critical(
-            log_names.error.drop_message,
-            f'Message {data_from_queue.notification_id} is already being processed by someone'
-        )
+        logger.critical(log_names.error.drop_message, 'Message is already being processed by someone')
         return await message.ack()
 
-    try:  # Началась обработка сообщения. Если в процессе блока try мы получим исключение — сообщение не пропадёт.
+    # Началась обработка сообщения. Если в процессе блока try мы получим исключение — сообщение не пропадёт.
+    try:
         data_from_service = await email_formatter_service.get_data(
             notification_id=data_from_queue.notification_id,
             x_request_id=data_from_queue.x_request_id
         )
+        if not email_formatter_service.can_send(data_from_service, data_from_queue):
+            return await message.ack()  # Если мы не можем продолжить — дропим сообщение.
 
-        if not email_formatter_service.data_is_valid(data_from_service):
-            # Сервис по какой-то причине не смог найти все необходимые данные, а значит чего зря время терять.
-            logger.critical(log_names.error.drop_message, f'Some data is missing ({data_from_service})')
-            return await message.ack()
-
-        if not email_formatter_service.groups_match(data_from_service.user_data.groups, data_from_queue.x_groups):
-            # Группа сообщение не совпадает с группами, на которые подписан пользователь,
-            # а значит ему неинтересно это письмо (плюс при этом сообщение не срочное).
-            logger.critical(log_names.error.drop_message, 'User is not subscribed group and message is not urgent')
-            return await message.ack()
-
-        # Если все эти проверки прошли — мы можем спокойно рендерить шаблон и записывать в очередь.
         data_from_service.message.update(data_from_service.user_data)
         html_text = await email_formatter_service.render_html(
             template=data_from_service.template,

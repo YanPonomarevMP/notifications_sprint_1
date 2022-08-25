@@ -7,7 +7,6 @@ from typing import Optional, Union
 from uuid import UUID
 
 from sqlalchemy import select, and_, update, func
-from sqlalchemy.sql import Select, Update
 
 from db.models.email_single_notifications import SingleEmails
 from db.models.email_templates import HTMLTemplates
