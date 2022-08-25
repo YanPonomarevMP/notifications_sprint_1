@@ -1,4 +1,15 @@
-"""Модуль содержит основную логику работы сервиса."""
+"""
+Модуль содержит основную логику работы сервиса.
+
+Мы знаем, что для корректной работы consume (src/db/message_brokers/rabbit_message_broker.py) нам необходим callback.
+В этом модуле мы осуществляем сборку всех написанных сервисов
+для работы email_formatter в одну функцию-обработчик callback и запускаем consume с этим обработчиком.
+
+Стоит пояснить что вообще делает email_formatter:
+
+Его задача принимать сообщение из одной очереди, форматировать (рендерить HTML шаблон) и отправлять в другую очередь.
+Помимо самого HTML он еще должен найти адресата (его почту) в Auth сервисе и тоже отправить в очередь.
+"""
 import asyncio
 import logging
 from logging import config as logging_config
@@ -18,6 +29,23 @@ from utils import aiohttp_session
 
 
 async def callback(message: AbstractIncomingMessage) -> None:
+    """
+    Функция-обработчик сообщений.
+
+    Когда consumer очереди выловит очередное сообщение — оно попадёт в эту функцию.
+    Тут мы будем обрабатывать сообщение исходя из нашей бизнес логики механизмом, очень напоминающем транзакцию.
+
+    Ниже по коду я четко расписала каждое важное действие,
+    что бы было видно, в каких случаях чего мы делаем с сообщением.
+
+    PS:
+    Если вы не знаете что такое message.ack(), message.reject(), которые присутствуют в коде —
+    советую посмотреть на эту статью https://www.rabbitmq.com/confirms.html#acknowledgement-modes
+    Там подробно описано что это такое и зачем.
+
+    Args:
+        message: сообщение, приходящее из очереди
+    """
     headers = message.info()
     data_from_queue = DataFromQueue(
         x_request_id=headers,
@@ -34,14 +62,14 @@ async def callback(message: AbstractIncomingMessage) -> None:
     transaction = await email_formatter_service.start_transaction(data_from_queue.notification_id)
 
     if not transaction:
-        # Сообщение уже кем-то взято, значит это ошибка и нам обрабатывать его не надо.
+        # Сообщение уже кем-то взято, значит это сообщение досталось нам по ошибке и обрабатывать его не надо.
         logger.critical(
             log_names.error.drop_message,
             f'Message {data_from_queue.notification_id} is already being processed by someone'
         )
         return await message.ack()
 
-    try:
+    try:  # Началась обработка сообщения. Если в процессе блока try мы получим исключение — сообщение не пропадёт.
         data_from_service = await email_formatter_service.get_data(
             notification_id=data_from_queue.notification_id,
             x_request_id=data_from_queue.x_request_id
@@ -75,7 +103,7 @@ async def callback(message: AbstractIncomingMessage) -> None:
             message_headers=headers
         )
         logger.info(log_names.info.success_completed, f'id message {data_from_queue.notification_id}')
-        return await message.ack()
+        return await message.ack()  # Только после всех этих действий мы можем сказать очереди — перемога.
 
     except Exception as error:
         # По какой-то причине мы не смогли корректно завершить обработку (к примеру Auth обвалился).
@@ -86,6 +114,9 @@ async def callback(message: AbstractIncomingMessage) -> None:
 
 
 async def startup() -> None:
+
+    """Функция для действий во время старта приложения."""
+
     headers = {'Authorization': config.auth_api.access_token.get_secret_value()}
     aiohttp_session.session = aiohttp.ClientSession(headers=headers)
     await message_broker_factory.idempotency_startup()
@@ -94,11 +125,16 @@ async def startup() -> None:
 
 
 async def shutdown() -> None:
+
+    """Функция для действий во время завершения работы приложения."""
+
     await aiohttp_session.session.close()
     await orm_factory.db.stop()
 
 
-async def main():
+async def main() -> None:
+
+    """Функция, запускающая всё приложение."""
 
     await startup()
     await message_broker_factory.consume(

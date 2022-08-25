@@ -47,5 +47,5 @@ class AuthService:
         return await result.json()
 
 
-logger = logging.getLogger('auth_service')
+logger = logging.getLogger('email_formatter.auth_service')
 auth_service = AuthService()
