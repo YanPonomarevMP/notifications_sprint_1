@@ -17,7 +17,7 @@ from email_formatter.models.data_from_db import RawDataDB
 from email_formatter.models.log import log_names
 
 
-class DBService:
+class DBService:  # noqa: WPS214
 
     """Класс для высокоуровневой работы с PG."""
 
@@ -32,7 +32,7 @@ class DBService:
 
     async def get_raw_data_by_id(self, notification_id: Union[UUID, str]) -> Optional[RawDataDB]:
         """
-        Метод достаёт «сырые» данные по notification_id
+        Метод достаёт «сырые» данные по notification_id.
 
         Args:
             notification_id: id сообщения
@@ -46,7 +46,7 @@ class DBService:
         if result:
             row, = result
             logger.info(log_names.info.success_get, notification_id, 'single_emails table')
-            return RawDataDB(**row._mapping)
+            return RawDataDB(**row._mapping)  # noqa: WPS437
 
         logger.error(log_names.error.failed_get, notification_id, 'single_emails table')
         return None
@@ -95,7 +95,7 @@ class DBService:
             notification_id: id сообщения
 
         Returns:
-            Вернёт ответ на вопрос: была ли запись взята первый раз, или её уже кто-то начал обрабатывать перед нами.
+            Вернёт ответ на вопрос была ли запись взята первый раз, или её уже кто-то начал обрабатывать перед нами.
         """
         query = self._get_query_mark_as_passed_to_handler(notification_id)  # SQLAlchemy query очень громоздко выглядит.
         result = await self.db.execute(query)
@@ -131,7 +131,7 @@ class DBService:
             SingleEmails.message,
         ).filter(
             and_(
-                SingleEmails.deleted_at == None,
+                SingleEmails.deleted_at == None,  # noqa: E711
                 SingleEmails.id == notification_id
             )
         )
@@ -163,8 +163,8 @@ class DBService:
         ).filter(
             and_(
                 SingleEmails.id == notification_id,
-                SingleEmails.passed_to_handler_at == None,
-                SingleEmails.deleted_at == None
+                SingleEmails.passed_to_handler_at == None,  # noqa: E711
+                SingleEmails.deleted_at == None  # noqa: E711
             )
         ).values(
             passed_to_handler_at=func.now()
@@ -187,7 +187,7 @@ class DBService:
         ).filter(
             and_(
                 SingleEmails.id == notification_id,
-                SingleEmails.deleted_at == None
+                SingleEmails.deleted_at == None  # noqa: E711
             )
         ).values(
             passed_to_handler_at=None

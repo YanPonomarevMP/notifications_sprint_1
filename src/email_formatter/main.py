@@ -1,3 +1,4 @@
+# type: ignore
 """
 Модуль содержит основную логику работы сервиса.
 
@@ -28,7 +29,7 @@ from email_formatter.services.email_formatter import email_formatter_service
 from utils import aiohttp_session
 
 
-async def callback(message: AbstractIncomingMessage) -> None:
+async def callback(message: AbstractIncomingMessage) -> None:  # noqa: WPS231,WPS212,WPS213
     """
     Функция-обработчик сообщений.
 
@@ -88,7 +89,10 @@ async def callback(message: AbstractIncomingMessage) -> None:
 
         # Если все эти проверки прошли — мы можем спокойно рендерить шаблон и записывать в очередь.
         data_from_service.message.update(data_from_service.user_data)
-        html_text = await email_formatter_service.render_html(data_from_service.template, data_from_service.message)
+        html_text = await email_formatter_service.render_html(
+            template=data_from_service.template,
+            data=data_from_service.message
+        )
 
         data_for_queue = orjson.dumps(
             {
@@ -97,7 +101,7 @@ async def callback(message: AbstractIncomingMessage) -> None:
                 'notification_id': data_from_queue.notification_id
             }
         )
-        await email_formatter_service.put_data(
+        await message_broker_factory.publish(
             message_body=data_for_queue,
             queue_name=config.rabbit_mq.queue_formatted_single_messages,
             message_headers=headers
@@ -147,6 +151,6 @@ async def main() -> None:
 logging_config.dictConfig(LOGGING)
 logger = logging.getLogger('email_formatter')
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     loop = asyncio.get_event_loop()
     loop.run_until_complete(main())

@@ -4,7 +4,7 @@ from typing import Optional
 from uuid import UUID
 
 from config.settings import config
-from email_formatter.models.http_responses import http
+from email_formatter.models.http_responses import http  # type: ignore
 from email_formatter.models.log import log_names
 from utils.aiohttp_session import get_session
 
@@ -17,7 +17,7 @@ class AuthService:
 
         """Конструктор."""
 
-        self.address = f'http://{config.auth_api.host}:{config.auth_api.port}'
+        self.address = f'http://{config.auth_api.host}:{config.auth_api.port}'  # noqa: WPS237
 
     async def get_user_data_by_id(
         self,
@@ -34,7 +34,7 @@ class AuthService:
         Returns:
             Вернёт имя пользователя, почту и группы, в которых пользователь состоит.
         """
-        url = f'{self.address}{config.auth_api.url_get_email}/{destination_id}'
+        url = f'{self.address}{config.auth_api.url_get_email}/{destination_id}'  # noqa: WPS237
         headers = {'X-Request-Id': x_request_id}
         session = await get_session()
         result = await session.get(url, headers=headers)

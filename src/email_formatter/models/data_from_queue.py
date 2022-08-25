@@ -3,7 +3,7 @@ from typing import Union, Optional
 
 from pydantic import validator
 
-from email_formatter.models.base_config import BaseConfigModel
+from email_formatter.models.base_config import BaseConfigModel  # type: ignore
 
 
 class DataFromQueue(BaseConfigModel):
@@ -56,4 +56,13 @@ class DataFromQueue(BaseConfigModel):
 
     @validator('count_retry')
     def dict_to_int(cls, message: dict) -> int:
+        """
+        Метод выкусывает из словаря с заголовками нужный ключ.
+
+        Args:
+            message: сообщение
+
+        Returns:
+            Вернёт count retry значение.
+        """
         return message['headers']['x-death'][0]['count']

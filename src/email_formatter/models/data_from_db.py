@@ -5,7 +5,7 @@ from uuid import UUID
 import orjson
 from pydantic import validator
 
-from email_formatter.models.base_config import BaseConfigModel
+from email_formatter.models.base_config import BaseConfigModel  # type: ignore
 
 
 class RawDataDB(BaseConfigModel):

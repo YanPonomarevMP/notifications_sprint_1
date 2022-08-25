@@ -6,9 +6,7 @@ from typing import Optional, Union
 from uuid import UUID
 
 from jinja2 import Environment
-from pydantic import SecretStr
 
-from db.message_brokers.rabbit_message_broker import message_broker_factory
 from email_formatter.models.all_data import AllData, AuthData
 from email_formatter.services.auth import auth_service
 from email_formatter.services.pg import db_service
@@ -33,13 +31,13 @@ class EmailFormatterService:
         raw_data = await db_service.get_raw_data_by_id(notification_id=notification_id)
 
         if raw_data:  # А иначе (без этого условия) просто потеряем зря время, плюс лишние запросы к БД и Auth, а зачем.
-            result.message = raw_data.message
+            result.message = raw_data.message  # type: ignore
             result.template = await db_service.get_template_by_id(template_id=raw_data.template_id)
             user_data = await auth_service.get_user_data_by_id(
                 destination_id=raw_data.destination_id,
                 x_request_id=x_request_id
             )
-            result.user_data = AuthData(**user_data)
+            result.user_data = AuthData(**user_data)  # type: ignore
         return result
 
     async def render_html(self, template: str, data: dict) -> str:
@@ -53,20 +51,8 @@ class EmailFormatterService:
         Returns:
             Вернёт сгенерированную строку HTML.
         """
-        tmpl = Environment(enable_async=True).from_string(template)
+        tmpl = Environment(enable_async=True, autoescape=True).from_string(template)
         return await tmpl.render_async(**data)
-
-    async def put_data(
-        self,
-        message_body: str,
-        queue_name: str,
-        message_headers: dict
-    ):
-        await message_broker_factory.publish(
-            message_body=message_body,
-            queue_name=queue_name,
-            message_headers=message_headers
-        )
 
     def data_is_valid(self, data: Optional[AllData]) -> bool:
         """
@@ -77,9 +63,9 @@ class EmailFormatterService:
             data: данные, которые нужно проверить
 
         Returns:
-            Вернёт ответ на вопрос: Все ли данные на месте, или может что-то наш сервис найти не сумел?
+            Вернёт ответ на вопрос все ли данные на месте, или может что-то наш сервис найти не сумел?
         """
-        return all(data.dict()) and all(data.user_data.dict())
+        return all(data.dict()) and all(data.user_data.dict())  # type: ignore
 
     def groups_match(self, user_group: list, message_group: str) -> bool:
         """
@@ -100,7 +86,7 @@ class EmailFormatterService:
 
         return message_group in user_group
 
-    async def start_transaction(self, notification_id: Union[bytes, str]) -> bool:
+    async def start_transaction(self, notification_id: Union[UUID, str]) -> bool:
         """
         Метод проставляет отметку в БД, что сообщение взято в обработку, тем самым имитируя начало транзакции.
 
@@ -108,12 +94,12 @@ class EmailFormatterService:
             notification_id: id сообщения
 
         Returns:
-            Вернёт ответ на вопрос: Удалось ли проставить отметку.
+            Вернёт ответ на вопрос удалось ли проставить отметку.
             Если нет — значит кто-то до нас её уже проставил, а значит это сообщение уже не наше дело.
         """
         return await db_service.mark_as_passed_to_handler(notification_id=notification_id)
 
-    async def abort_transaction(self, notification_id: Union[bytes, str]) -> None:
+    async def abort_transaction(self, notification_id: Union[UUID, str]) -> None:
         """
         Метод убирает отметку в БД, что сообщение взято в обработку, тем самым имитируя прерывание транзакции.
 

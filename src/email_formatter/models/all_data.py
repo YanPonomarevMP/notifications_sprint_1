@@ -1,7 +1,7 @@
 """Модуль содержит pydantic модели."""
 from typing import Optional, List
 
-from email_formatter.models.base_config import BaseConfigModel
+from email_formatter.models.base_config import BaseConfigModel  # type: ignore
 
 
 class AuthData(BaseConfigModel):
