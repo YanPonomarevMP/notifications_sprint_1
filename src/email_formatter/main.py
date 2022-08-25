@@ -25,17 +25,19 @@ async def callback(message: AbstractIncomingMessage) -> None:
         notification_id=message.body
     )
     transaction = await email_formatter_service.start_transaction(data_from_queue.notification_id)
+
+    if not transaction:
+        logger.critical(log_names.error.drop_message, f'Message is already being processed by someone')
+        return await message.ack()
+
     try:
-        if not transaction:
-            print('фююю')
-            return await message.ack()
         data_from_service = await email_formatter_service.get_data(
             notification_id=data_from_queue.notification_id,
             x_request_id=data_from_queue.x_request_id
         )
 
         if not email_formatter_service.data_is_valid(data_from_service):
-            logger.critical(log_names.error.drop_message, f'Already process message or some data is missing')
+            logger.critical(log_names.error.drop_message, f'Some data is missing ({data_from_service})')
             return await message.ack()
 
         if not email_formatter_service.groups_match(data_from_service.user_data.groups, data_from_queue.x_groups):
