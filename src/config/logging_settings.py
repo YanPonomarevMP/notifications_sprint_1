@@ -48,6 +48,10 @@ LOGGING = {
             'level': 'INFO',
             'handlers': ['file']
         },
+        'email_formatter': {
+            'level': 'INFO',
+            'handlers': ['file']
+        }
     },
     'root': {
         'level': 'INFO',
