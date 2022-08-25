@@ -25,6 +25,10 @@ class RabbitSettings(BaseSettings):
     default_message_ttl_ms: int = vault.get_secret('default_message_ttl_ms')
     max_retry_count: int = vault.get_secret('max_retry_count')
 
+    queue_raw_single_messages: str = vault.get_secret('queue_raw_single_messages')
+    queue_raw_group_messages: str = vault.get_secret('queue_raw_group_messages')
+    queue_formatted_single_messages: str = vault.get_secret('queue_formatted_single_messages')
+
 
 class PostgresSettings(BaseSettings):
     login: SecretStr = vault.get_secret('pg_user')  # имя поля user пересекается с переменной окружения user
@@ -61,6 +65,7 @@ class SettingsAuthAPI(BaseSettings):
     port: int = vault.get_secret('auth_api_port')
     url_check_token: str = vault.get_secret('url_check_token')
     access_token: SecretStr = vault.get_secret('auth_api_access_token')
+    url_get_email: str = vault.get_secret('url_get_email')
 
 
 class SettingsJaeger(BaseSettings):
