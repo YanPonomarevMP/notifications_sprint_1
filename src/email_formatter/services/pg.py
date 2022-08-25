@@ -40,7 +40,16 @@ class DBService:  # noqa: WPS214
         Returns:
             Вернёт pydantic модель RawDataModel.
         """
-        query = self._get_query_select_raw_data(notification_id)  # SQLAlchemy query очень громоздко выглядит.
+        query = select(
+            SingleEmails.template_id,
+            SingleEmails.destination_id,
+            SingleEmails.message,
+        ).filter(
+            and_(
+                SingleEmails.deleted_at == None,  # noqa: E711
+                SingleEmails.id == notification_id
+            )
+        )
         result = await self.db.execute(query)
 
         if result:
@@ -61,7 +70,7 @@ class DBService:  # noqa: WPS214
         Returns:
             Вернёт HTML строку-шаблон.
         """
-        query = self._get_query_select_template_by_id(template_id)  # SQLAlchemy query очень громоздко выглядит.
+        query = select(HTMLTemplates.template).filter(HTMLTemplates.id == template_id)
         result = await self.db.execute(query)
 
         if result:
@@ -97,7 +106,19 @@ class DBService:  # noqa: WPS214
         Returns:
             Вернёт ответ на вопрос была ли запись взята первый раз, или её уже кто-то начал обрабатывать перед нами.
         """
-        query = self._get_query_mark_as_passed_to_handler(notification_id)  # SQLAlchemy query очень громоздко выглядит.
+        query = update(
+            SingleEmails
+        ).filter(
+            and_(
+                SingleEmails.id == notification_id,
+                SingleEmails.passed_to_handler_at == None,  # noqa: E711
+                SingleEmails.deleted_at == None  # noqa: E711
+            )
+        ).values(
+            passed_to_handler_at=func.now()
+        ).returning(
+            SingleEmails.id
+        )
         result = await self.db.execute(query)
 
         if result is not None:  # Если None — метку не удалось поставить, а значит она уже стоит.
@@ -112,77 +133,7 @@ class DBService:  # noqa: WPS214
         Args:
             notification_id: id сообщения
         """
-        query = self._get_query_unmark_as_passed_to_handler(notification_id)
-        await self.db.execute(query)
-
-    def _get_query_select_raw_data(self, notification_id: Union[UUID, str]) -> Select:
-        """
-        Метод формирует SQLAlchemy запрос Select.
-
-        Args:
-            notification_id: id сообщения
-
-        Returns:
-            Вернёт SQLAlchemy запрос.
-        """
-        return select(
-            SingleEmails.template_id,
-            SingleEmails.destination_id,
-            SingleEmails.message,
-        ).filter(
-            and_(
-                SingleEmails.deleted_at == None,  # noqa: E711
-                SingleEmails.id == notification_id
-            )
-        )
-
-    def _get_query_select_template_by_id(self, template_id: Union[UUID, str]) -> Select:
-        """
-        Метод формирует SQLAlchemy запрос Select.
-
-        Args:
-            template_id: id шаблона
-
-        Returns:
-            Вернёт SQLAlchemy запрос.
-        """
-        return select(HTMLTemplates.template).filter(HTMLTemplates.id == template_id)
-
-    def _get_query_mark_as_passed_to_handler(self, notification_id: Union[UUID, str]) -> Update:
-        """
-        Метод формирует SQLAlchemy запрос Update.
-
-        Args:
-            notification_id: id сообщения
-
-        Returns:
-            Вернёт SQLAlchemy запрос.
-        """
-        return update(
-            SingleEmails
-        ).filter(
-            and_(
-                SingleEmails.id == notification_id,
-                SingleEmails.passed_to_handler_at == None,  # noqa: E711
-                SingleEmails.deleted_at == None  # noqa: E711
-            )
-        ).values(
-            passed_to_handler_at=func.now()
-        ).returning(
-            SingleEmails.id
-        )
-
-    def _get_query_unmark_as_passed_to_handler(self, notification_id: Union[UUID, str]) -> Update:
-        """
-        Метод формирует SQLAlchemy запрос Update.
-
-        Args:
-            notification_id: id сообщения
-
-        Returns:
-            Вернёт SQLAlchemy запрос.
-        """
-        return update(
+        query = update(
             SingleEmails
         ).filter(
             and_(
@@ -192,6 +143,7 @@ class DBService:  # noqa: WPS214
         ).values(
             passed_to_handler_at=None
         )
+        await self.db.execute(query)
 
 
 logger = logging.getLogger('email_formatter.db_service')
