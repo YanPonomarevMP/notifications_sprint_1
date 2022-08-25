@@ -1,16 +1,17 @@
 # Flake8: noqa
 # type: ignore
 """Модуль содержит псевдо аут (мок) сервер."""
+
 import uvicorn
-from fastapi import FastAPI, Header, Body
+from fastapi import FastAPI, Header
 
 app = FastAPI()
 
 
 @app.post('/v1/back/check_token')
 async def check_token(
-    authorization: str = Header(None),
-    x_request_id: str = Header(None)
+    authorization: str = Header(),
+    x_request_id: str = Header()
 ) -> dict:
 
     """Ручка с очень некачественной проверкой токена."""
@@ -22,19 +23,26 @@ async def check_token(
     return {'msg': 'OK'}
 
 
-@app.get('/v1/back/email')
-async def check_token(
-    authorization: str = Header(None),
-    email: str = Body(None)
+@app.get('/v1/back/user_data/email/{email_id}')
+async def email(
+    email_id: str,
+    authorization: str = Header(),
+    x_request_id: str = Header()
 ) -> dict:
 
     """Ручка возвращает email."""
 
-    print('authorization', authorization)
+    print('authorization', authorization),
+    print('x_request_id', x_request_id)
     print()
-    print('email', email)
+    print('email_id', email_id)
 
-    return {'email': 'vladasabelnikova@yandex.ru'}
+    # TODO: С этим надо что-то сделать, нельзя это оставлять так.
+    return {
+        'email': 'vladasabelnikova@yandex.ru',
+        'name': 'vlada',
+        'groups': ['detectives', 'melodramas']
+    }
 
 
 if __name__ == '__main__':
