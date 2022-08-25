@@ -1,5 +1,5 @@
 """Модель содержит pydantic модели для RawData из DB."""
-from typing import Union
+from typing import Union, Optional
 from uuid import UUID
 
 import orjson
@@ -15,7 +15,7 @@ class RawDataDB(BaseConfigModel):
     template_id: UUID
     destination_id: UUID
     message: Union[dict, str]
-    group_id: UUID
+    group_id: Optional[UUID]
 
     @validator('message')
     def json_to_dict(cls, message: str) -> dict:

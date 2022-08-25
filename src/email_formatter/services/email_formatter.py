@@ -9,8 +9,6 @@ from uuid import UUID
 from jinja2 import Environment
 
 from email_formatter.models.all_data import AllData, AuthData, FinalData
-from email_formatter.models.data_from_queue import DataFromQueue
-from email_formatter.models.log import log_names
 from email_formatter.services.auth import auth_service
 from email_formatter.services.pg import db_service
 

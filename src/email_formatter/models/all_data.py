@@ -40,4 +40,4 @@ class FinalData(BaseConfigModel):
     user_data: FinalAuth
     template: str
     message: dict
-    group: UUID
+    group: Optional[UUID]
