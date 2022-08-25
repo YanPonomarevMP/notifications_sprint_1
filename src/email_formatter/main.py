@@ -22,12 +22,23 @@ async def callback(message: AbstractIncomingMessage) -> None:
     data_from_queue = DataFromQueue(
         x_request_id=headers,
         x_groups=headers,
+        count_retry=headers,
         notification_id=message.body
     )
+
+    if data_from_queue.count_retry > config.rabbit_mq.max_retry_count:
+        # Сообщение больше допустимого повторно встаёт в очередь после reject.
+        logger.critical(log_names.error.drop_message, 'Too many repeat inserts in the queue')
+        return await message.ack()
+
     transaction = await email_formatter_service.start_transaction(data_from_queue.notification_id)
 
     if not transaction:
-        logger.critical(log_names.error.drop_message, f'Message is already being processed by someone')
+        # Сообщение уже кем-то взято, значит это ошибка и нам обрабатывать его не надо.
+        logger.critical(
+            log_names.error.drop_message,
+            f'Message {data_from_queue.notification_id} is already being processed by someone'
+        )
         return await message.ack()
 
     try:
@@ -37,13 +48,17 @@ async def callback(message: AbstractIncomingMessage) -> None:
         )
 
         if not email_formatter_service.data_is_valid(data_from_service):
+            # Сервис по какой-то причине не смог найти все необходимые данные, а значит чего зря время терять.
             logger.critical(log_names.error.drop_message, f'Some data is missing ({data_from_service})')
             return await message.ack()
 
         if not email_formatter_service.groups_match(data_from_service.user_data.groups, data_from_queue.x_groups):
+            # Группа сообщение не совпадает с группами, на которые подписан пользователь,
+            # а значит ему неинтересно это письмо (плюс при этом сообщение не срочное).
             logger.critical(log_names.error.drop_message, 'User is not subscribed group and message is not urgent')
             return await message.ack()
 
+        # Если все эти проверки прошли — мы можем спокойно рендерить шаблон и записывать в очередь.
         data_from_service.message.update(data_from_service.user_data)
         html_text = await email_formatter_service.render_html(data_from_service.template, data_from_service.message)
 
@@ -63,6 +78,8 @@ async def callback(message: AbstractIncomingMessage) -> None:
         return await message.ack()
 
     except Exception as error:
+        # По какой-то причине мы не смогли корректно завершить обработку (к примеру Auth обвалился).
+        # Это означает, что сообщение пойдёт в «спячку» на некоторое время и транзакцию мы принудительно прерываем.
         await email_formatter_service.abort_transaction(data_from_queue.notification_id)
         logger.warning(log_names.warn.retrying, data_from_queue.notification_id, error)
         return await message.reject()

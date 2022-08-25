@@ -13,6 +13,7 @@ class DataFromQueue(BaseConfigModel):
     x_request_id: Union[str, dict]
     x_groups: Optional[Union[str, dict]]
     notification_id: Union[bytes, str]
+    count_retry: Union[int, dict]
 
     @validator('x_request_id')
     def x_request_id_to_str(cls, message: dict) -> str:
@@ -52,3 +53,7 @@ class DataFromQueue(BaseConfigModel):
             Вернёт декодированную строку.
         """
         return message.decode()
+
+    @validator('count_retry')
+    def dict_to_int(cls, message: dict) -> int:
+        return message['headers']['x-death'][0]['count']

@@ -79,6 +79,18 @@ class DBService:
         И возвращает ответ на вопрос:
         была ли запись взята первый раз, или её уже кто-то начал обрабатывать перед нами.
 
+        PS:
+        Возможно не совсем верно смешивать два действия в одном методе,
+        однако, когда для меня стоял выбор, что сделать:
+
+        1. два запроса к БД, но раздельные методы типа
+        def mark_as_passed_to_handler() -> None
+        def someone_already_took() -> bool
+
+        2. Один запрос к БД, но, возможно, менее читаемо (реализовано сейчас)
+
+        Я выбрала второй вариант, т.к. жертвовать запросами мне видится более критично.
+
         Args:
             notification_id: id сообщения
 
@@ -94,6 +106,12 @@ class DBService:
         return bool(result)
 
     async def unmark_as_passed_to_handler(self, notification_id: Union[UUID, str]) -> None:
+        """
+        Метод убирает отметку о том, что сообщение взято в обработку (дабы не допустить коллизий).
+
+        Args:
+            notification_id: id сообщения
+        """
         query = self._get_query_unmark_as_passed_to_handler(notification_id)
         await self.db.execute(query)
 
@@ -155,6 +173,15 @@ class DBService:
         )
 
     def _get_query_unmark_as_passed_to_handler(self, notification_id: Union[UUID, str]) -> Update:
+        """
+        Метод формирует SQLAlchemy запрос Update.
+
+        Args:
+            notification_id: id сообщения
+
+        Returns:
+            Вернёт SQLAlchemy запрос.
+        """
         return update(
             SingleEmails
         ).filter(

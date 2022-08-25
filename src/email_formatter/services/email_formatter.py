@@ -100,11 +100,27 @@ class EmailFormatterService:
 
         return message_group in user_group
 
-    async def start_transaction(self, notification_id):
+    async def start_transaction(self, notification_id: Union[bytes, str]) -> bool:
+        """
+        Метод проставляет отметку в БД, что сообщение взято в обработку, тем самым имитируя начало транзакции.
+
+        Args:
+            notification_id: id сообщения
+
+        Returns:
+            Вернёт ответ на вопрос: Удалось ли проставить отметку.
+            Если нет — значит кто-то до нас её уже проставил, а значит это сообщение уже не наше дело.
+        """
         return await db_service.mark_as_passed_to_handler(notification_id=notification_id)
 
-    async def abort_transaction(self, notification_id):
-        return await db_service.unmark_as_passed_to_handler(notification_id=notification_id)
+    async def abort_transaction(self, notification_id: Union[bytes, str]) -> None:
+        """
+        Метод убирает отметку в БД, что сообщение взято в обработку, тем самым имитируя прерывание транзакции.
+
+        Args:
+            notification_id: id сообщения
+        """
+        await db_service.unmark_as_passed_to_handler(notification_id=notification_id)
 
 
 email_formatter_service = EmailFormatterService()
