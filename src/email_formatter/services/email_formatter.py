@@ -33,8 +33,9 @@ class EmailFormatterService:
         result = AllData()
         raw_data = await db_service.get_raw_data_by_id(notification_id=notification_id)
 
-        if raw_data:  # А иначе (без этого условия) просто потеряем зря время, плюс лишние запросы к БД и Auth, а зачем.
+        if raw_data:
             result.message = raw_data.message  # type: ignore
+            result.group = raw_data.group_id
             result.template = await db_service.get_template_by_id(template_id=raw_data.template_id)
             user_data = await auth_service.get_user_data_by_id(
                 destination_id=raw_data.destination_id,

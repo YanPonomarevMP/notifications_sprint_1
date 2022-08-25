@@ -1,5 +1,6 @@
 """Модуль содержит pydantic модели."""
 from typing import Optional, List
+from uuid import UUID
 
 from email_formatter.models.base_config import BaseConfigModel  # type: ignore
 
@@ -10,7 +11,7 @@ class AuthData(BaseConfigModel):
 
     name: Optional[str]
     email: Optional[str]
-    groups: Optional[List[str]]
+    groups: Optional[List[UUID]]
 
 
 class AllData(BaseConfigModel):
@@ -20,6 +21,7 @@ class AllData(BaseConfigModel):
     user_data: Optional[AuthData]
     template: Optional[str]
     message: Optional[dict]
+    group: Optional[UUID]
 
 
 class FinalAuth(BaseConfigModel):
@@ -28,7 +30,7 @@ class FinalAuth(BaseConfigModel):
 
     name: str
     email: str
-    groups: List[str]
+    groups: List[UUID]
 
 
 class FinalData(BaseConfigModel):
@@ -38,3 +40,4 @@ class FinalData(BaseConfigModel):
     user_data: FinalAuth
     template: str
     message: dict
+    group: UUID

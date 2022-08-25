@@ -15,6 +15,7 @@ class RawDataDB(BaseConfigModel):
     template_id: UUID
     destination_id: UUID
     message: Union[dict, str]
+    group_id: UUID
 
     @validator('message')
     def json_to_dict(cls, message: str) -> dict:

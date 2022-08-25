@@ -50,19 +50,17 @@ async def callback(message: AbstractIncomingMessage) -> None:  # noqa: WPS231,WP
     header = message.info()
     message_data = DataFromQueue(
         x_request_id=header,
-        x_groups=header,
         count_retry=header,
         notification_id=message.body
     )
 
-    # Сообщение больше допустимого повторно встаёт в очередь после reject, это плохо, т.к. это зацикливание.
     if message_data.count_retry > config.rabbit_mq.max_retry_count:
         logger.info(log_names.error.drop_message, 'Too many repeat inserts in the queue')
         return await message.ack()
 
     locked = await formatter_service.lock(message_data.notification_id)
 
-    # Сообщение уже кем-то взято, значит это сообщение досталось нам по ошибке и обрабатывать его не надо.
+    # Если не удалось заблокировать, значит уже обработано.
     if not locked:
         logger.info(log_names.error.drop_message, 'Message has being processed by someone')
         return await message.ack()
@@ -74,7 +72,8 @@ async def callback(message: AbstractIncomingMessage) -> None:  # noqa: WPS231,WP
             x_request_id=message_data.x_request_id
         )
 
-        if not formatter_service.check_subscription(notification_data.user_data.groups, message_data.x_groups):
+        # Проверяем подписан ли пользователь на сообщение.
+        if not formatter_service.check_subscription(notification_data.user_data.groups, notification_data.group):
             logger.info(log_names.error.drop_message, 'User is not subscribed for this message')
             return await message.ack()
 
