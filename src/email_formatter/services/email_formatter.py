@@ -41,6 +41,7 @@ class EmailFormatterService:
                 x_request_id=x_request_id
             )
             result.user_data = AuthData(**user_data)  # type: ignore
+        result.message.update(result.user_data)
         return result
 
     async def render_html(self, template: str, data: dict) -> str:
@@ -89,9 +90,9 @@ class EmailFormatterService:
 
         return message_group in user_group
 
-    async def start_transaction(self, notification_id: Union[UUID, str]) -> bool:
+    async def lock(self, notification_id: Union[UUID, str]) -> bool:
         """
-        Метод проставляет отметку в БД, что сообщение взято в обработку, тем самым имитируя начало транзакции.
+        Метод проставляет отметку в БД, что сообщение взято в обработку.
 
         Args:
             notification_id: id сообщения
@@ -102,9 +103,9 @@ class EmailFormatterService:
         """
         return await db_service.mark_as_passed_to_handler(notification_id=notification_id)
 
-    async def abort_transaction(self, notification_id: Union[UUID, str]) -> None:
+    async def unlock(self, notification_id: Union[UUID, str]) -> None:
         """
-        Метод убирает отметку в БД, что сообщение взято в обработку, тем самым имитируя прерывание транзакции.
+        Метод убирает отметку в БД, что сообщение взято в обработку.
 
         Args:
             notification_id: id сообщения

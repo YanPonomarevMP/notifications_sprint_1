@@ -47,61 +47,59 @@ async def callback(message: AbstractIncomingMessage) -> None:  # noqa: WPS231,WP
     Args:
         message: сообщение, приходящее из очереди
     """
-    headers = message.info()
-    data_from_queue = DataFromQueue(
-        x_request_id=headers,
-        x_groups=headers,
-        count_retry=headers,
+    header = message.info()
+    message_data = DataFromQueue(
+        x_request_id=header,
+        x_groups=header,
+        count_retry=header,
         notification_id=message.body
     )
 
     # Сообщение больше допустимого повторно встаёт в очередь после reject, это плохо, т.к. это зацикливание.
-    if data_from_queue.count_retry > config.rabbit_mq.max_retry_count:
-        logger.critical(log_names.error.drop_message, 'Too many repeat inserts in the queue')
+    if message_data.count_retry > config.rabbit_mq.max_retry_count:
+        logger.info(log_names.error.drop_message, 'Too many repeat inserts in the queue')
         return await message.ack()
 
-    transaction = await email_formatter_service.start_transaction(data_from_queue.notification_id)
+    locked = await email_formatter_service.lock(message_data.notification_id)
 
     # Сообщение уже кем-то взято, значит это сообщение досталось нам по ошибке и обрабатывать его не надо.
-    if not transaction:
-        logger.critical(log_names.error.drop_message, 'Message is already being processed by someone')
+    if not locked:
+        logger.info(log_names.error.drop_message, 'Message has being processed by someone')
         return await message.ack()
 
-    # Началась обработка сообщения. Если в процессе блока try мы получим исключение — сообщение не пропадёт.
+    # Начало транзакции.
     try:
-        data_from_service = await email_formatter_service.get_data(
-            notification_id=data_from_queue.notification_id,
-            x_request_id=data_from_queue.x_request_id
+        notification_data = await email_formatter_service.get_data(
+            notification_id=message_data.notification_id,
+            x_request_id=message_data.x_request_id
         )
-        if not email_formatter_service.can_send(data_from_service, data_from_queue):
+        if not email_formatter_service.can_send(notification_data, message_data):
             return await message.ack()  # Если мы не можем продолжить — дропим сообщение.
 
-        data_from_service.message.update(data_from_service.user_data)
         html_text = await email_formatter_service.render_html(
-            template=data_from_service.template,
-            data=data_from_service.message
+            template=notification_data.template,
+            data=notification_data.message
         )
 
-        data_for_queue = orjson.dumps(
+        formatted_notification = orjson.dumps(
             {
                 'html': html_text,
-                'email': data_from_service.user_data.email,
-                'notification_id': data_from_queue.notification_id
+                'email': notification_data.user_data.email,
+                'notification_id': message_data.notification_id
             }
         )
         await message_broker_factory.publish(
-            message_body=data_for_queue,
+            message_body=formatted_notification,
             queue_name=config.rabbit_mq.queue_formatted_single_messages,
-            message_headers=headers
+            message_headers=header
         )
-        logger.info(log_names.info.success_completed, f'id message {data_from_queue.notification_id}')
+        logger.info(log_names.info.success_completed, f'id message {message_data.notification_id}')
         return await message.ack()  # Только после всех этих действий мы можем сказать очереди — перемога.
 
     except Exception as error:
-        # По какой-то причине мы не смогли корректно завершить обработку (к примеру Auth обвалился).
-        # Это означает, что сообщение пойдёт в «спячку» на некоторое время и транзакцию мы принудительно прерываем.
-        await email_formatter_service.abort_transaction(data_from_queue.notification_id)
-        logger.warning(log_names.warn.retrying, data_from_queue.notification_id, error)
+        # Если не смогли завершить транзакцию, снимаем блокировку и реджектим сообщение.
+        await email_formatter_service.unlock(message_data.notification_id)
+        logger.warning(log_names.warn.retrying, message_data.notification_id, error)
         return await message.reject()
 
 
