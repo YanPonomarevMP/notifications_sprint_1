@@ -55,7 +55,7 @@ async def callback(message: AbstractIncomingMessage) -> None:  # noqa: WPS231,WP
         notification_id=message.body
     )
 
-    # Сообщение больше допустимого повторно встаёт в очередь после reject.
+    # Сообщение больше допустимого повторно встаёт в очередь после reject, это плохо, т.к. это зацикливание.
     if data_from_queue.count_retry > config.rabbit_mq.max_retry_count:
         logger.critical(log_names.error.drop_message, 'Too many repeat inserts in the queue')
         return await message.ack()
