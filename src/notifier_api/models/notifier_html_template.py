@@ -1,5 +1,6 @@
 """Модель содержит pydantic модели входящих данных ручки /html_templates."""
-from typing import Optional
+from datetime import datetime
+from typing import Optional, Union
 from uuid import UUID
 
 from fastapi import HTTPException
@@ -21,13 +22,22 @@ class IdempotencyKeyChecker(BaseOrjson):
     idempotency_key: Optional[UUID]
 
 
-class HtmlTemplate(BaseOrjson):
+class HtmlTemplatesRequest(BaseOrjson):
 
     """Данные, поступившие от клиента."""
+
+    title: str
+    template: str
+
+
+class HtmlTemplatesQuery(BaseOrjson):
+
+    """Модель для работы с данными при обработке запроса"""
 
     id: Optional[UUID]
     title: str
     template: str
+    msg: Optional[Union[datetime, str]]
 
     class Config:
         """Настройка валидации при изменении значения поля."""
@@ -61,3 +71,11 @@ class HtmlTemplate(BaseOrjson):
                 detail=f'{err.msg} - {err.source}'
             )
         return good_uuid.idempotency_key
+
+
+class HtmlTemplatesResponse(BaseOrjson):
+
+    """Формат ответа UGC API."""
+
+    id: Optional[UUID]
+    msg: Optional[Union[datetime, str]]

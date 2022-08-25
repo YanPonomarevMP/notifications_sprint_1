@@ -26,6 +26,7 @@ class HTTPResponses(BaseOrjson):
     request_id_required: Response = Response(message='X-Request-id required', code=status.BAD_REQUEST.value)
     too_many_requests: Response = Response(message=status.TOO_MANY_REQUESTS.phrase, code=status.TOO_MANY_REQUESTS.value)
     request_validation_error: Response = Response(message='Validation error', code=status.UNPROCESSABLE_ENTITY.value)
+    backoff_error: Response = Response(message='Try again later', code=status.GATEWAY_TIMEOUT.value)
 
 
 http = HTTPResponses()

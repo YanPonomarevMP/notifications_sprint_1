@@ -6,6 +6,7 @@ from sqlalchemy.sql import Update, Select, Insert, Delete
 
 from config.settings import config
 from db.storage.abstract_classes import AbstractDBClient
+from utils.async_backoff import timeout_limiter
 
 
 class AsyncPGClient(AbstractDBClient):
@@ -25,6 +26,7 @@ class AsyncPGClient(AbstractDBClient):
         """Метод закрывает соединение с БД."""
         await self.session.disconnect()
 
+    @timeout_limiter(max_timeout=10)
     async def execute(self, query: Union[Update, Select, Insert, Delete]):
         """
         Метод выполняет запрос в БД.
