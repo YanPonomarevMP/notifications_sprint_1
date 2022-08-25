@@ -21,25 +21,29 @@ class AuthService:
 
     async def get_user_data_by_id(
         self,
-        destination_id: UUID
+        destination_id: UUID,
+        x_request_id: str
     ) -> Optional[dict]:
         """
         Метод достаёт пользовательские данные из Auth.
 
         Args:
             destination_id: id пользователя, который нам нужен
+            x_request_id: id запроса
 
         Returns:
             Вернёт имя пользователя, почту и группы, в которых пользователь состоит.
         """
         url = f'{self.address}{config.auth_api.url_get_email}/{destination_id}'
+        headers = {'X-Request-Id': x_request_id}
         session = await get_session()
-        result = await session.get(url)
+        result = await session.get(url, headers=headers)
 
         if result.status != http.ok.code:
             logger.error(log_names.error.failed_get, destination_id, 'Auth service')
             return None
 
+        logger.info(log_names.info.success_get, destination_id, 'Auth service')
         return await result.json()
 
 

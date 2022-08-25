@@ -1,3 +1,4 @@
+"""Модуль содержит основную логику работы сервиса."""
 import asyncio
 import logging
 from logging import config as logging_config
@@ -22,10 +23,11 @@ async def callback(message: AbstractIncomingMessage) -> None:
         x_groups=headers,
         notification_id=message.body
     )
-    headers = {'X-Request-Id': data_from_queue.x_request_id}
-    aiohttp_session.session.headers.update(headers)
     try:
-        result = await email_formatter_service.get_data(notification_id=data_from_queue.notification_id)
+        result = await email_formatter_service.get_data(
+            notification_id=data_from_queue.notification_id,
+            x_request_id=data_from_queue.x_request_id
+        )
 
         if not email_formatter_service.data_is_valid(result):
             logger.critical(log_names.error.drop_message, f'Already process message or some data is missing ({result})')
