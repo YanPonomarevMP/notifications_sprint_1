@@ -24,7 +24,11 @@ async def callback(message: AbstractIncomingMessage) -> None:
         x_groups=headers,
         notification_id=message.body
     )
+    transaction = await email_formatter_service.start_transaction(data_from_queue.notification_id)
     try:
+        if not transaction:
+            print('фююю')
+            return await message.ack()
         data_from_service = await email_formatter_service.get_data(
             notification_id=data_from_queue.notification_id,
             x_request_id=data_from_queue.x_request_id
@@ -57,6 +61,7 @@ async def callback(message: AbstractIncomingMessage) -> None:
         return await message.ack()
 
     except Exception as error:
+        await email_formatter_service.abort_transaction(data_from_queue.notification_id)
         logger.warning(log_names.warn.retrying, data_from_queue.notification_id, error)
         return await message.reject()
 

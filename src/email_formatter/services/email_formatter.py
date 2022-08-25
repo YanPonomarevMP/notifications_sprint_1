@@ -29,15 +29,15 @@ class EmailFormatterService:
         Returns:
             Вернёт pydantic модель AuthData, или None, если данное сообщение уже кем-то обрабатывается.
         """
-        success = await db_service.mark_as_passed_to_handler(notification_id=notification_id)
-
-        # Нам нужно обрабатывать сообщение, только если никто до нас еще не взял его в обработку.
-        # Метод db_service.mark_as_passed_to_handler решает сразу две задачи в одном запросе к БД:
+        # success = await db_service.mark_as_passed_to_handler(notification_id=notification_id)
         #
-        # 1. Проставляет отметку, что мы приняли сообщение в обработку
-        # 2. Если отметка уже стоит — скажет нам, что НЕ надо обрабатывать.
-        if not success:
-            return None  # Мы не смогли проставить отметку, а значит — кто-то другой уже проставил её до нас.
+        # # Нам нужно обрабатывать сообщение, только если никто до нас еще не взял его в обработку.
+        # # Метод db_service.mark_as_passed_to_handler решает сразу две задачи в одном запросе к БД:
+        # #
+        # # 1. Проставляет отметку, что мы приняли сообщение в обработку
+        # # 2. Если отметка уже стоит — скажет нам, что НЕ надо обрабатывать.
+        # if not success:
+        #     return None  # Мы не смогли проставить отметку, а значит — кто-то другой уже проставил её до нас.
 
         result = AllData()
         raw_data = await db_service.get_raw_data_by_id(notification_id=notification_id)
@@ -113,6 +113,12 @@ class EmailFormatterService:
             return True
 
         return message_group in user_group
+
+    async def start_transaction(self, notification_id):
+        return await db_service.mark_as_passed_to_handler(notification_id=notification_id)
+
+    async def abort_transaction(self, notification_id):
+        return await db_service.unmark_as_passed_to_handler(notification_id=notification_id)
 
 
 email_formatter_service = EmailFormatterService()

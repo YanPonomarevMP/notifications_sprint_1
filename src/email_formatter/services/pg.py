@@ -93,6 +93,10 @@ class DBService:
 
         return bool(result)
 
+    async def unmark_as_passed_to_handler(self, notification_id: Union[UUID, str]) -> None:
+        query = self._get_query_unmark_as_passed_to_handler(notification_id)
+        await self.db.execute(query)
+
     def _get_query_select_raw_data(self, notification_id: Union[UUID, str]) -> Select:
         """
         Метод формирует SQLAlchemy запрос Select.
@@ -148,6 +152,18 @@ class DBService:
             passed_to_handler_at=func.now()
         ).returning(
             SingleEmails.id
+        )
+
+    def _get_query_unmark_as_passed_to_handler(self, notification_id: Union[UUID, str]) -> Update:
+        return update(
+            SingleEmails
+        ).filter(
+            and_(
+                SingleEmails.id == notification_id,
+                SingleEmails.deleted_at == None
+            )
+        ).values(
+            passed_to_handler_at=None
         )
 
 
