@@ -8,7 +8,7 @@ from uuid import UUID
 
 from jinja2 import Environment
 
-from email_formatter.models.all_data import AllData, AuthData
+from email_formatter.models.all_data import AllData, AuthData, FinalData
 from email_formatter.models.data_from_queue import DataFromQueue
 from email_formatter.models.log import log_names
 from email_formatter.services.auth import auth_service
@@ -19,7 +19,7 @@ class EmailFormatterService:
 
     """Класс с интерфейсом для Email Formatter Service."""
 
-    async def get_data(self, notification_id: Union[UUID, str], x_request_id: str) -> Optional[AllData]:
+    async def get_data(self, notification_id: Union[UUID, str], x_request_id: str) -> Optional[FinalData]:
         """
         Метод достаёт данные.
 
@@ -42,7 +42,7 @@ class EmailFormatterService:
             )
             result.user_data = AuthData(**user_data)  # type: ignore
         result.message.update(result.user_data)
-        return result
+        return FinalData(**result.dict())
 
     async def render_html(self, template: str, data: dict) -> str:
         """
@@ -58,20 +58,7 @@ class EmailFormatterService:
         tmpl = Environment(enable_async=True, autoescape=True).from_string(template)
         return await tmpl.render_async(**data)
 
-    def data_is_valid(self, data: Optional[AllData]) -> bool:
-        """
-        Метод проверяет валидность данных.
-        Все ли данные на месте, или может что-то наш сервис найти не сумел?
-
-        Args:
-            data: данные, которые нужно проверить
-
-        Returns:
-            Вернёт ответ на вопрос все ли данные на месте, или может что-то наш сервис найти не сумел?
-        """
-        return all(data.dict()) and all(data.user_data.dict())  # type: ignore
-
-    def groups_match(self, user_group: list, message_group: str) -> bool:
+    def check_subscription(self, user_group: list, message_group: str) -> bool:
         """
         Метод сверяет группу сообщения с группами, в которых состоит пользователь.
         Если сообщение срочное —
@@ -112,37 +99,6 @@ class EmailFormatterService:
         """
         await db_service.unmark_as_passed_to_handler(notification_id=notification_id)
 
-    def can_send(self, data_from_service: AllData, data_from_queue: DataFromQueue) -> bool:
-        """
-        Метод проверяет возможно ли дальше работать с сообщением, или его нужно дропить.
-
-        Причин дропа несколько:
-
-        1. Сервис по какой-то причине не смог найти все необходимые данные
-        2. Группа сообщение не совпадает с группами, на которые подписан пользователь (при этом сообщение не срочное)
-
-        Args:
-            data_from_service: данные, которые раздобыл сервис
-            data_from_queue: данные, которые пришли к нам из очереди
-
-        Returns:
-            Вернёт ответ на вопрос возможно ли дальше работать с сообщением, или его нужно дропить
-        """
-        if not email_formatter_service.data_is_valid(data_from_service):
-            # Сервис по какой-то причине не смог найти все необходимые данные, а значит чего зря время терять.
-            logger.critical(log_names.error.drop_message, f'Some data is missing ({data_from_service})')
-            return False
-
-        if not email_formatter_service.groups_match(
-            data_from_service.user_data.groups,  # type: ignore
-            data_from_queue.x_groups  # type: ignore
-        ):
-            # Группа сообщение не совпадает с группами, на которые подписан пользователь,
-            # а значит ему неинтересно это письмо (плюс при этом сообщение не срочное).
-            logger.critical(log_names.error.drop_message, 'User is not subscribed group and message is not urgent')
-            return False
-        return True
-
 
 logger = logging.getLogger('email_formatter')
-email_formatter_service = EmailFormatterService()
+formatter_service = EmailFormatterService()

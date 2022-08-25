@@ -25,7 +25,7 @@ from db.message_brokers.rabbit_message_broker import message_broker_factory
 from db.storage import orm_factory
 from email_formatter.models.data_from_queue import DataFromQueue
 from email_formatter.models.log import log_names
-from email_formatter.services.email_formatter import email_formatter_service
+from email_formatter.services.email_formatter import formatter_service
 from utils import aiohttp_session
 
 
@@ -60,7 +60,7 @@ async def callback(message: AbstractIncomingMessage) -> None:  # noqa: WPS231,WP
         logger.info(log_names.error.drop_message, 'Too many repeat inserts in the queue')
         return await message.ack()
 
-    locked = await email_formatter_service.lock(message_data.notification_id)
+    locked = await formatter_service.lock(message_data.notification_id)
 
     # Сообщение уже кем-то взято, значит это сообщение досталось нам по ошибке и обрабатывать его не надо.
     if not locked:
@@ -69,14 +69,16 @@ async def callback(message: AbstractIncomingMessage) -> None:  # noqa: WPS231,WP
 
     # Начало транзакции.
     try:
-        notification_data = await email_formatter_service.get_data(
+        notification_data = await formatter_service.get_data(
             notification_id=message_data.notification_id,
             x_request_id=message_data.x_request_id
         )
-        if not email_formatter_service.can_send(notification_data, message_data):
-            return await message.ack()  # Если мы не можем продолжить — дропим сообщение.
 
-        html_text = await email_formatter_service.render_html(
+        if not formatter_service.check_subscription(notification_data.user_data.groups, message_data.x_groups):
+            logger.info(log_names.error.drop_message, 'User is not subscribed for this message')
+            return await message.ack()
+
+        html_text = await formatter_service.render_html(
             template=notification_data.template,
             data=notification_data.message
         )
@@ -98,7 +100,7 @@ async def callback(message: AbstractIncomingMessage) -> None:  # noqa: WPS231,WP
 
     except Exception as error:
         # Если не смогли завершить транзакцию, снимаем блокировку и реджектим сообщение.
-        await email_formatter_service.unlock(message_data.notification_id)
+        await formatter_service.unlock(message_data.notification_id)
         logger.warning(log_names.warn.retrying, message_data.notification_id, error)
         return await message.reject()
 
