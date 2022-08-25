@@ -54,7 +54,7 @@ class EmailFormatterService:
 
         return result
 
-    async def render_html(self, template: str, data: dict) -> bytes:
+    async def render_html(self, template: str, data: dict) -> str:
         """
         Метод создаёт HTML на основе шаблона и данных.
 
@@ -66,12 +66,11 @@ class EmailFormatterService:
             Вернёт сгенерированную строку HTML.
         """
         tmpl = Environment(enable_async=True).from_string(template)
-        result = await tmpl.render_async(**data)
-        return result.encode()
+        return await tmpl.render_async(**data)
 
     async def put_data(
         self,
-        message_body: bytes,
+        message_body: str,
         queue_name: str,
         message_headers: dict
     ):

@@ -4,6 +4,7 @@ import logging
 from logging import config as logging_config
 
 import aiohttp
+import orjson
 from aio_pika.abc import AbstractIncomingMessage
 
 from config.logging_settings import LOGGING
@@ -24,24 +25,31 @@ async def callback(message: AbstractIncomingMessage) -> None:
         notification_id=message.body
     )
     try:
-        result = await email_formatter_service.get_data(
+        data_from_service = await email_formatter_service.get_data(
             notification_id=data_from_queue.notification_id,
             x_request_id=data_from_queue.x_request_id
         )
 
-        if not email_formatter_service.data_is_valid(result):
-            logger.critical(log_names.error.drop_message, f'Already process message or some data is missing ({result})')
+        if not email_formatter_service.data_is_valid(data_from_service):
+            logger.critical(log_names.error.drop_message, f'Already process message or some data is missing')
             return await message.ack()
 
-        if not email_formatter_service.can_send(result.user_data.groups, data_from_queue.x_groups):
+        if not email_formatter_service.can_send(data_from_service.user_data.groups, data_from_queue.x_groups):
             logger.critical(log_names.error.drop_message, 'User is not subscribed group and message is not urgent')
             return await message.ack()
 
-        result.message.update(result.user_data)
-        html_text = await email_formatter_service.render_html(result.template, result.message)
+        data_from_service.message.update(data_from_service.user_data)
+        html_text = await email_formatter_service.render_html(data_from_service.template, data_from_service.message)
 
+        data_for_queue = orjson.dumps(
+            {
+                'html': html_text,
+                'email': data_from_service.user_data.email,
+                'notification_id': data_from_queue.notification_id
+            }
+        )
         await email_formatter_service.put_data(
-            message_body=html_text,
+            message_body=data_for_queue,
             queue_name=config.rabbit_mq.queue_formatted_single_messages,
             message_headers=headers
         )
