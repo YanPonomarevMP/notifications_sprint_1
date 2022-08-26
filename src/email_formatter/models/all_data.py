@@ -22,6 +22,8 @@ class AllData(BaseConfigModel):
     template: Optional[str]
     message: Optional[dict]
     group: Optional[UUID]
+    source: Optional[str]
+    subject: Optional[str]
 
 
 class FinalAuth(BaseConfigModel):
@@ -41,3 +43,5 @@ class FinalData(BaseConfigModel):
     template: str
     message: dict
     group: Optional[UUID]
+    source: str
+    subject: str

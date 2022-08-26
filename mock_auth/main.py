@@ -41,7 +41,7 @@ async def email(
     return {
         'email': 'vladasabelnikova@yandex.ru',
         'name': 'vlada',
-        'groups': ['dba8704f-c69a-431c-80e5-d779d537a124', 'dba8704f-c69a-431c-80e5-d779d537a123']
+        'groups': ['301c63eb-ef21-4269-b2df-9832f3ce19e1', 'dba8704f-c69a-431c-80e5-d779d537a126']
     }
 
 

@@ -34,6 +34,8 @@ class EmailFormatterService:
         if raw_data:
             result.message = raw_data.message  # type: ignore
             result.group = raw_data.group_id
+            result.subject = raw_data.subject
+            result.source = raw_data.source
             result.template = await db_service.get_template_by_id(template_id=raw_data.template_id)
             user_data = await auth_service.get_user_data_by_id(
                 destination_id=raw_data.destination_id,

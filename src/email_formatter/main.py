@@ -86,7 +86,9 @@ async def callback(message: AbstractIncomingMessage) -> None:  # noqa: WPS231,WP
             {
                 'html': html_text,
                 'email': notification_data.user_data.email,
-                'notification_id': message_data.notification_id
+                'notification_id': message_data.notification_id,
+                'source': notification_data.source,
+                'subject': notification_data.subject
             }
         )
         await message_broker_factory.publish(
