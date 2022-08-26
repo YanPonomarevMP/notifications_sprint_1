@@ -15,8 +15,8 @@ class MessageData(BaseConfigModel):
     count_retry: Union[int, dict]
     notification_id: Union[str, bytes]
     html: Union[str, bytes]
-    from_user: Union[str, bytes]
-    to_user: Union[str, bytes]
+    reply_to: Union[str, bytes]
+    to: Union[str, bytes]
     subject: Union[str, bytes]
 
     @validator('x_request_id')
@@ -47,20 +47,65 @@ class MessageData(BaseConfigModel):
 
     @validator('notification_id')
     def get_notification_id(cls, message: bytes) -> str:
+        """
+        Метод достаёт нужный ключ.
+
+        Args:
+            message: сообщение из очереди
+
+        Returns:
+            Вернёт значение ключа.
+        """
         return orjson.loads(message)['notification_id']
 
     @validator('html')
     def get_html(cls, message: bytes) -> str:
+        """
+        Метод достаёт нужный ключ.
+
+        Args:
+            message: сообщение из очереди
+
+        Returns:
+            Вернёт значение ключа.
+        """
         return orjson.loads(message)['html']
 
-    @validator('from_user')
-    def get_from_user(cls, message: bytes) -> str:
-        return orjson.loads(message)['from']
+    @validator('reply_to')
+    def get_reply_to(cls, message: bytes) -> str:
+        """
+        Метод достаёт нужный ключ.
 
-    @validator('to_user')
+        Args:
+            message: сообщение из очереди
+
+        Returns:
+            Вернёт значение ключа.
+        """
+        return orjson.loads(message)['reply_to']
+
+    @validator('to')
     def get_to_user(cls, message: bytes) -> str:
+        """
+        Метод достаёт нужный ключ.
+
+        Args:
+            message: сообщение из очереди
+
+        Returns:
+            Вернёт значение ключа.
+        """
         return orjson.loads(message)['to']
 
     @validator('subject')
     def get_subject(cls, message: bytes) -> str:
+        """
+        Метод достаёт нужный ключ.
+
+        Args:
+            message: сообщение из очереди
+
+        Returns:
+            Вернёт значение ключа.
+        """
         return orjson.loads(message)['subject']

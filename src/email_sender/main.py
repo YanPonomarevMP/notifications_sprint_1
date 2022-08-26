@@ -9,22 +9,42 @@ from config.settings import config
 from db.message_brokers.rabbit_message_broker import message_broker_factory
 from db.storage import orm_factory
 from email_sender.models.message_data import MessageData
+from email_sender.services.email_sender import sender_service
 
 
 async def callback(message: AbstractIncomingMessage):
     header = message.info()
-    body = message.body.decode()
     message_data = MessageData(
         x_request_id=header,
         count_retry=header,
         notification_id=message.body,
         html=message.body,
-        from_user=message.body,
-        to_user=message.body,
+        reply_to=message.body,
+        to=message.body,
         subject=message.body
     )
-    print(message_data)
-    return await message.ack()
+    if message_data.count_retry > config.rabbit_mq.max_retry_count:
+        print('count_retry')
+        return await message.ack()
+
+    locked = await sender_service.lock(message_data.notification_id)
+
+    # Если не удалось заблокировать, значит уже обработано.
+    if not locked:
+        print('locked')
+        return await message.ack()
+
+    try:
+        notification = sender_service.create_notification(message_data)
+        smtp_response = await sender_service.post_notification(notification)
+        await sender_service.post_response(notification_id=message_data.notification_id, response=smtp_response)
+        print('гуд')
+        return await message.ack()
+
+    except Exception as error:
+        print('error', error)
+        await sender_service.unlock(message_data.notification_id)
+        return await message.reject()
 
 
 async def startup() -> None:
@@ -33,6 +53,7 @@ async def startup() -> None:
 
     await message_broker_factory.idempotency_startup()
     await orm_factory.db.start()
+    print('start')
 
 
 async def shutdown() -> None:
