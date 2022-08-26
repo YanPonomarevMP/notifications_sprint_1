@@ -56,6 +56,19 @@ class DBService:  # noqa: WPS214
         )
         await self.db.execute(query)
 
+    async def mark_as_sent_result(self, notification_id: Union[UUID, str], result: str) -> None:
+        query = update(
+            SingleEmails
+        ).filter(
+            and_(
+                SingleEmails.id == notification_id,
+                SingleEmails.deleted_at == None  # noqa: E711
+            )
+        ).values(
+            sent_result=result
+        )
+        await self.db.execute(query)
+
 
 logger = logging.getLogger('email_sender.db_service')
 db_service = DBService(database=db)
