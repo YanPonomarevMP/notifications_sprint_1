@@ -74,7 +74,7 @@ async def callback(message: AbstractIncomingMessage) -> None:  # noqa: WPS231,WP
                 'html': html_text,
                 'to': notification_data.user_data.email,
                 'notification_id': message_data.notification_id,
-                'from': notification_data.source,
+                'reply_to': notification_data.source,
                 'subject': notification_data.subject
             }
         )
