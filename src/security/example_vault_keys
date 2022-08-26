@@ -10,7 +10,7 @@ vault kv put notifications/rabbit_password value=guest
 
 vault kv put notifications/fast_api_host value=localhost
 vault kv put notifications/fast_api_port value=8000
-vault kv put notifications/fast_api_swagger_title value=UGC
+vault kv put notifications/fast_api_swagger_title value=Notifier
 vault kv put notifications/fast_api_swagger_description value="**Notifier API**"
 vault kv put notifications/fast_api_swagger_version value=0.1.0
 vault kv put notifications/fast_api_swagger_docs_url value=/api/openapi

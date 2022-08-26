@@ -5,7 +5,7 @@ from typing import Callable, Tuple
 from fastapi.routing import APIRoute
 from fastapi import Request, Response
 
-from notifier_api.models.access_log import AccessPath, XRequestID, Client
+from notifier_api.models.access_log import PathToLoggerName, XRequestID, Client
 
 
 class LoggedRoute(APIRoute):
@@ -65,13 +65,15 @@ async def parse_request_for_logging(request: Request) -> Tuple[str, str]:
         Кортеж с именем логгера и строкой сообщения для логирования запроса.
     """
 
-    logger_name = AccessPath(name=request.scope['path'])
     x_request_id = XRequestID(value=request.scope['headers'])
     method = request.method
     client = Client(url=request.scope['client'])
     path_prm = request.path_params
     query_prm = request.query_params
     body = {}
+
+    logger_name = PathToLoggerName(name=request.scope['path'])
+
     if await request.body():
         body = await request.json()
 

@@ -5,11 +5,11 @@ from models.base_orjson import BaseOrjson  # type: ignore
 from pydantic import validator
 
 
-class AccessPath(BaseOrjson):
+class PathToLoggerName(BaseOrjson):
 
     """Преобразование пути в имя логгера."""
 
-    name: str
+    name: Union[str, dict]
 
     @validator('name')
     def convert_path_to_name(cls, path: str) -> str:  # noqa: WPS110, N805

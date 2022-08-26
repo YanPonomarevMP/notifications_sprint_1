@@ -1,6 +1,6 @@
 """Модель содержит pydantic модели входящих данных ручки /html_templates."""
 from datetime import datetime
-from typing import Optional, Union
+from typing import Optional, Union, List, Dict
 from uuid import UUID
 
 from fastapi import HTTPException
@@ -35,8 +35,9 @@ class HtmlTemplatesQuery(BaseOrjson):
     """Модель для работы с данными при обработке запроса"""
 
     id: Optional[UUID]
-    title: str
-    template: str
+    title: Optional[str]
+    template: Optional[str]
+    templates_selected: Optional[List[Dict]]
     msg: Optional[Union[datetime, str]]
 
     class Config:
@@ -79,3 +80,11 @@ class HtmlTemplatesResponse(BaseOrjson):
 
     id: Optional[UUID]
     msg: Optional[Union[datetime, str]]
+
+
+class HtmlTemplatesResponseSelected(BaseOrjson):
+
+    """Формат ответа UGC API."""
+
+    msg: Optional[str]
+    templates_selected: Optional[List[Dict]]
