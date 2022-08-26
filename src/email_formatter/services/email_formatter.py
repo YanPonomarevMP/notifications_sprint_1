@@ -42,7 +42,7 @@ class EmailFormatterService:
                 x_request_id=x_request_id
             )
             result.user_data = AuthData(**user_data)  # type: ignore
-        result.message.update(result.user_data)
+        result.message.update(result.user_data)  # type: ignore
         return FinalData(**result.dict())
 
     async def render_html(self, template: str, data: dict) -> str:

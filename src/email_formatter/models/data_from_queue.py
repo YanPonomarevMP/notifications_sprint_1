@@ -1,5 +1,5 @@
 """Модуль содержит Pydantic модель для данных, приходящих из очереди."""
-from typing import Union, Optional
+from typing import Union
 
 from pydantic import validator
 
