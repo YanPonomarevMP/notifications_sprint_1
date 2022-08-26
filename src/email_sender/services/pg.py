@@ -11,6 +11,7 @@ from sqlalchemy import and_, update, func
 from db.models.email_single_notifications import SingleEmails
 from db.storage.abstract_classes import AbstractDBClient
 from db.storage.orm_factory import db
+from email_sender.models.log import log_names
 
 
 class DBService:  # noqa: WPS214
@@ -41,6 +42,10 @@ class DBService:  # noqa: WPS214
             SingleEmails.id
         )
         result = await self.db.execute(query)
+
+        if result is not None:  # Если None — метку не удалось поставить, а значит она уже стоит.
+            logger.info(log_names.info.accepted, f'message with id {notification_id}')
+
         return bool(result)
 
     async def unmark_as_sent_at(self, notification_id: Union[UUID, str]) -> None:

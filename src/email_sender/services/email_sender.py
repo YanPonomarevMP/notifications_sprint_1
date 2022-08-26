@@ -1,3 +1,4 @@
+import logging
 from email.message import EmailMessage
 from typing import Union
 from uuid import UUID
@@ -20,7 +21,6 @@ class EmailSenderService:
         notification['Reply-to'] = message_data.reply_to
         content = message_data.html
         notification.add_alternative(content, subtype='html')
-        print('create_notification')
         return notification
 
     async def post_notification(self, notification: EmailMessage) -> str:
@@ -32,7 +32,6 @@ class EmailSenderService:
             password=config.smtp.password.get_secret_value(),
             use_tls=True
         )
-        print('post_notification')
         return response[1]  # Сообщение из SMTP.
 
     async def lock(self, notification_id: Union[UUID, str]) -> bool:
@@ -61,4 +60,5 @@ class EmailSenderService:
         await db_service.mark_as_sent_result(notification_id=notification_id, result=response)
 
 
+logger = logging.getLogger('email_sender')
 sender_service = EmailSenderService()
