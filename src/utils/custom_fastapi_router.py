@@ -69,9 +69,13 @@ async def parse_request_for_logging(request: Request) -> Tuple[str, str]:
     x_request_id = XRequestID(value=request.scope['headers'])
     method = request.method
     client = Client(url=request.scope['client'])
-    body = await request.json()
+    path_prm = request.path_params
+    query_prm = request.query_params
+    body = {}
+    if await request.body():
+        body = await request.json()
 
-    return logger_name.name, f'{method} {client.url} {x_request_id.value} {body}'
+    return logger_name.name, f'{method} {client.url} {x_request_id.value} {path_prm} {query_prm} {body}'  # noqa: WPS221
 
 
 async def parse_response_for_logging(response: Response) -> str:
