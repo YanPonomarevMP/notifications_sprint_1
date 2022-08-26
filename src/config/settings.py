@@ -9,6 +9,17 @@ from security.vault_app_config import vault
 logging_config.dictConfig(LOGGING)
 
 
+class SMTPSettings(BaseSettings):
+
+    """Настройки SMTP."""
+
+    host: str = vault.get_secret('smtp_host')
+    port: int = vault.get_secret('smtp_port')
+    login: SecretStr = vault.get_secret('smtp_login')
+    password: SecretStr = vault.get_secret('smtp_password')
+    email_address: str = vault.get_secret('smtp_email_address')
+
+
 class RabbitSettings(BaseSettings):
 
     """Настройки RabbitMQ."""
@@ -94,6 +105,7 @@ class Config(BaseSettings):
     auth_api: SettingsAuthAPI = SettingsAuthAPI()
     jaeger: SettingsJaeger = SettingsJaeger()
     redis: SettingsRedis = SettingsRedis()
+    smtp: SMTPSettings = SMTPSettings()
 
 
 config = Config()
