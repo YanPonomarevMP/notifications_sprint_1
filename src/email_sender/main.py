@@ -8,10 +8,22 @@ from config.logging_settings import LOGGING
 from config.settings import config
 from db.message_brokers.rabbit_message_broker import message_broker_factory
 from db.storage import orm_factory
+from email_sender.models.message_data import MessageData
 
 
 async def callback(message: AbstractIncomingMessage):
-    print(message.body.decode())
+    header = message.info()
+    body = message.body.decode()
+    message_data = MessageData(
+        x_request_id=header,
+        count_retry=header,
+        notification_id=message.body,
+        html=message.body,
+        from_user=message.body,
+        to_user=message.body,
+        subject=message.body
+    )
+    print(message_data)
     return await message.ack()
 
 
