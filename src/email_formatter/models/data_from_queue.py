@@ -6,7 +6,7 @@ from pydantic import validator
 from email_formatter.models.base_config import BaseConfigModel  # type: ignore
 
 
-class DataFromQueue(BaseConfigModel):
+class MessageData(BaseConfigModel):
 
     """Данные из очереди."""
 

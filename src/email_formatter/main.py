@@ -23,7 +23,7 @@ from config.logging_settings import LOGGING
 from config.settings import config
 from db.message_brokers.rabbit_message_broker import message_broker_factory
 from db.storage import orm_factory
-from email_formatter.models.data_from_queue import DataFromQueue
+from email_formatter.models.data_from_queue import MessageData
 from email_formatter.models.log import log_names
 from email_formatter.services.email_formatter import formatter_service
 from utils import aiohttp_session
@@ -48,7 +48,7 @@ async def callback(message: AbstractIncomingMessage) -> None:  # noqa: WPS231,WP
         message: сообщение, приходящее из очереди
     """
     header = message.info()
-    message_data = DataFromQueue(
+    message_data = MessageData(
         x_request_id=header,
         count_retry=header,
         notification_id=message.body
@@ -85,16 +85,16 @@ async def callback(message: AbstractIncomingMessage) -> None:  # noqa: WPS231,WP
         formatted_notification = orjson.dumps(
             {
                 'html': html_text,
-                'email': notification_data.user_data.email,
+                'to': notification_data.user_data.email,
                 'notification_id': message_data.notification_id,
-                'source': notification_data.source,
+                'from': notification_data.source,
                 'subject': notification_data.subject
             }
         )
         await message_broker_factory.publish(
             message_body=formatted_notification,
             queue_name=config.rabbit_mq.queue_formatted_single_messages,
-            message_headers=header
+            message_headers={'x-request-id': message_data.x_request_id}
         )
         logger.info(log_names.info.success_completed, f'id message {message_data.notification_id}')
         return await message.ack()  # Только после всех этих действий мы можем сказать очереди — перемога.

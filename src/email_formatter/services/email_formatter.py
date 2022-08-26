@@ -8,7 +8,7 @@ from uuid import UUID
 
 from jinja2 import Environment
 
-from email_formatter.models.all_data import AllData, AuthData, FinalData
+from email_formatter.models.all_data import NotificationData, AuthData, FinalData
 from email_formatter.services.auth import auth_service
 from email_formatter.services.pg import db_service
 
@@ -28,7 +28,7 @@ class EmailFormatterService:
         Returns:
             Вернёт pydantic модель AuthData.
         """
-        result = AllData()
+        result = NotificationData()
         raw_data = await db_service.get_raw_data_by_id(notification_id=notification_id)
 
         if raw_data:

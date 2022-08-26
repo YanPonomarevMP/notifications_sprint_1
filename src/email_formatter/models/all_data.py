@@ -14,7 +14,7 @@ class AuthData(BaseConfigModel):
     groups: Optional[List[UUID]]
 
 
-class AllData(BaseConfigModel):
+class NotificationData(BaseConfigModel):
 
     """Все данные, которые сервис юзает."""
 
