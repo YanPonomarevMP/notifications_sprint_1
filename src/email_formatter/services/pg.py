@@ -43,6 +43,9 @@ class DBService:  # noqa: WPS214
             SingleEmails.template_id,
             SingleEmails.destination_id,
             SingleEmails.message,
+            SingleEmails.group_id,
+            SingleEmails.source,
+            SingleEmails.subject
         ).filter(
             and_(
                 SingleEmails.deleted_at == None,  # noqa: E711
