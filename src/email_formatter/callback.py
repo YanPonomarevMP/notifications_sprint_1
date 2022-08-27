@@ -47,7 +47,7 @@ async def callback(message: AbstractIncomingMessage) -> None:  # noqa: WPS231,WP
 
     locked = await formatter_service.lock(message_data.notification_id)
 
-    # Если не удалось заблокировать, значит уже обработано.
+    # Если не удалось заблокировать, значит уже обработано (или удалено).
     if not locked:
         logger.info(log_names.error.drop_message, 'Message has being processed or deleted', message_data.x_request_id)
         return await message.ack()
@@ -78,11 +78,21 @@ async def callback(message: AbstractIncomingMessage) -> None:  # noqa: WPS231,WP
                 'subject': notification_data.subject
             }
         )
-        await message_broker_factory.publish(
+        # Не вышло опубликовать в очередь.
+        if not await message_broker_factory.publish(
             message_body=formatted_notification,
             queue_name=config.rabbit_mq.queue_formatted_single_messages,
             message_headers={'x-request-id': message_data.x_request_id}
-        )
+        ):
+            logger.warning(
+                log_names.warn.retrying,
+                message_data.notification_id,
+                'Failed connect to Rabbit',
+                message_data.x_request_id
+            )
+            await formatter_service.unlock(message_data.notification_id)
+            return await message.reject()
+
         logger.info(log_names.info.success_completed, f'id {message_data.notification_id}', message_data.x_request_id)
         return await message.ack()  # Только после всех этих действий мы можем сказать очереди — перемога.
 
