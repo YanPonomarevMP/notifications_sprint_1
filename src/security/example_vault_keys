@@ -45,3 +45,9 @@ vault kv put notifications/url_get_email value=/v1/back/user_data/email
 vault kv put notifications/queue_raw_single_messages value=queue_raw_single_messages
 vault kv put notifications/queue_raw_group_messages value=queue_raw_group_messages
 vault kv put notifications/queue_formatted_single_messages value=queue_formatted_single_messages
+
+vault kv put notifications/smtp_host value=smtp.yandex.ru
+vault kv put notifications/smtp_port value=465
+vault kv put notifications/smtp_login value=***
+vault kv put notifications/smtp_password value=***
+vault kv put notifications/smtp_email_address value=***
