@@ -1,0 +1,35 @@
+"""Модель содержит pydantic модели для RawData из DB."""
+from typing import Union, Optional
+from uuid import UUID
+
+import orjson
+from pydantic import validator
+
+from email_formatter.models.base_config import BaseConfigModel  # type: ignore
+
+
+class RawDataDB(BaseConfigModel):
+
+    """Класс с «сырыми» данными из DB."""
+
+    template_id: UUID
+    destination_id: UUID
+    message: Union[dict, str]
+    group_id: Optional[UUID]
+    source: str
+    subject: str
+    delay: int
+    send_with_gmt: bool
+
+    @validator('message')
+    def json_to_dict(cls, message: str) -> dict:
+        """
+        Метод преобразует JSON в dict.
+
+        Args:
+            message: JSON с данными
+
+        Returns:
+            Вернёт словарь.
+        """
+        return orjson.loads(message)
