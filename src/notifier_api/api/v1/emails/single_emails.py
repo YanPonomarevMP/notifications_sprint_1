@@ -32,7 +32,7 @@ router = APIRouter(
     response_description='Returns the answer whether the email accepted but not sent yet',
     dependencies=[Depends(requests_per_minute(3))]
 )
-async def new_template(
+async def new_email(
     template: SingleEmailsRequest,
     factory: HtmlTemplatesFactory = Depends(get_html_templates_factory),
     idempotency_key: str = Header(description='UUID4'),  # noqa: B008
@@ -53,15 +53,16 @@ async def new_template(
 
 @router.put(
     path='/',
-    status_code=http.accepted.code,
+    status_code=http.ok.code,
     response_model=SingleEmailsResponse,
     summary='Create new email',
     description='Endpoint accepts email for processing',
     response_description='Returns the answer whether the email accepted but not sent yet',
     dependencies=[Depends(requests_per_minute(3))]
 )
-async def new_template(
+async def update_email(
     template: SingleEmailsRequestUpdate,
+    response: Response,
     factory: HtmlTemplatesFactory = Depends(get_html_templates_factory),
 ) -> SingleEmailsResponse:
 
@@ -72,10 +73,9 @@ async def new_template(
     query = query.filter(SingleEmails.id == query_data.id)
     query = query.values(**query_data.dict(exclude={'msg', 'emails_selected', 'id'}))
 
-    query_data.msg = await factory.insert(query)
+    query_data.msg = await factory.update(query, response)
 
     return query_data
-
 
 
 @router.delete(
@@ -87,7 +87,7 @@ async def new_template(
     response_description='Returns the answer whether the email is deleted',
     dependencies=[Depends(requests_per_minute(3))]
 )
-async def new_template(
+async def delete_email(
     email_id: UUID,
     response: Response,
     factory: HtmlTemplatesFactory = Depends(get_html_templates_factory),
@@ -120,7 +120,7 @@ async def new_template(
     response_description='Email data',
     dependencies=[Depends(requests_per_minute(3))]
 )
-async def get_template(
+async def get_email(
     email_id: UUID,
     response: Response,
     factory: HtmlTemplatesFactory = Depends(get_html_templates_factory),
