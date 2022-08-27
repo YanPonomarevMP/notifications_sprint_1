@@ -5,11 +5,21 @@ from fastapi import HTTPException, Depends
 from db.storage.abstract_classes import AbstractDBClient
 from db.storage.orm_factory import AsyncPGClient, get_db
 from notifier_api.models.http_responses import http
-from notifier_api.services.base_execute_factory import BaseExecuteFactory
 from utils.custom_exceptions import DataBaseError
 
 
-class HtmlTemplatesFactory(BaseExecuteFactory):
+class HtmlTemplatesFactory:
+    def __init__(self, orm: AbstractDBClient):
+        self.orm = orm
+
+    async def _execute(self, query):
+        try:
+            result = await self.orm.execute(query)
+
+        except DataBaseError as error:
+            raise HTTPException(status_code=http.backoff_error.code, detail=error.message)
+
+        return result
 
     async def insert(self, query):
 
