@@ -17,7 +17,7 @@ from api.v1.emails.main import router as v1_emails_router
 from config.logging_settings import LOGGING
 # from api_config.fast_api_logging import LOGGING
 from config.settings import config
-from utils.custom_exceptions import validation_exception_handler, http_exception_handler
+from utils.custom_exceptions_handlers import validation_exception_handler, http_exception_handler
 from utils.dependencies import authorization_required
 from utils.startup_shutdown import startup, shutdown
 
