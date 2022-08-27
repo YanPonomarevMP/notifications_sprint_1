@@ -6,6 +6,8 @@ from fastapi import APIRouter, Depends, Header, HTTPException
 from sqlalchemy import delete, update, func, and_, select
 from sqlalchemy.dialects.postgresql import insert
 
+from config.settings import config
+from db.message_brokers.rabbit_message_broker import message_broker_factory
 from db.models.email_single_notifications import SingleEmails
 from db.models.email_templates import HTMLTemplates
 from db.storage.orm_factory import get_db, AsyncPGClient
@@ -35,7 +37,8 @@ router = APIRouter(
 async def new_email(
     template: SingleEmailsRequest,
     factory: EmailsFactory = Depends(get_emails_factory),
-    idempotency_key: str = Header(description='UUID4'),  # noqa: B008
+    idempotency_key: UUID = Header(description='UUID4'),  # noqa: B008
+    x_request_id: str = Header(),  # noqa: B008, WPS204
 ) -> SingleEmailsResponse:
 
     query_data = SingleEmailsQuery(**template.dict())
@@ -45,6 +48,13 @@ async def new_email(
     query = query.returning(SingleEmails.created_at)
     query = query.values(**query_data.dict(exclude={'msg', 'emails_selected'}))
     idempotent_query = query.on_conflict_do_nothing(index_elements=['id'])
+
+    await message_broker_factory.publish(
+        message_body=query_data.id.bytes,
+        queue_name=config.rabbit_mq.queue_raw_single_messages,
+        message_headers={'x-request-id': x_request_id},
+        delay=query_data.delay
+    )
 
     query_data.msg = await factory.insert(idempotent_query)
 

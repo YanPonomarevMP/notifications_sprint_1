@@ -2,6 +2,7 @@
 import aiohttp
 
 from config.settings import config
+from db.message_brokers.rabbit_message_broker import message_broker_factory
 from db.storage import orm_factory
 from utils import aiohttp_session
 
@@ -12,6 +13,7 @@ async def startup() -> None:
 
     headers = {'Authorization': config.auth_api.access_token.get_secret_value()}
     aiohttp_session.session = aiohttp.ClientSession(headers=headers)
+    await message_broker_factory.idempotency_startup()
 
     # await event_broker.start()
     await orm_factory.db.start()

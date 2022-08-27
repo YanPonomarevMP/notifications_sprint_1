@@ -34,7 +34,7 @@ router = APIRouter(
 async def new_template(
     template: HtmlTemplatesRequest,
     factory: EmailsFactory = Depends(get_emails_factory),
-    idempotency_key: str = Header(description='UUID4'),  # noqa: B008
+    idempotency_key: UUID = Header(description='UUID4'),  # noqa: B008
 ) -> HtmlTemplatesResponse:
 
     query_data = HtmlTemplatesQuery(**template.dict())
