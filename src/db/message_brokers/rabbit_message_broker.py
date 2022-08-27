@@ -75,7 +75,7 @@ class RabbitMessageBroker(AbstractMessageBroker):
         queue_name: str,
         message_headers: Optional[dict] = None,
         delay: Union[int, float] = 0
-    ) -> Union[Basic.Ack, Basic.Nack, Basic.Reject, None]:
+    ) -> bool:
         """
         Метод складывает сообщение в очередь.
 
@@ -106,7 +106,9 @@ class RabbitMessageBroker(AbstractMessageBroker):
             )
 
             await self._create_alive_queue(queue_name=queue_name, channel=channel)
-            return await exchange_incoming.publish(message=message, routing_key=queue_name)
+            result = await exchange_incoming.publish(message=message, routing_key=queue_name)
+            return isinstance(result, Basic.Ack)
+
         finally:  # Даже если метеорит упадёт на землю мы всё равно закроем соединение. :)
             await connection.close()
 

@@ -13,22 +13,28 @@ class EmailsFactory:
     def __init__(self, orm: AbstractDBClient):
         self.orm = orm
 
-    async def _execute(self, query):
+    async def _execute(self, query, message_to_broker=None):
         try:
-            result = await self.orm.execute(query)
+            result_db = await self.orm.execute(query)
+            if result_db and message_to_broker:
+                if not await message_broker_factory.publish(**message_to_broker.dict()):
+                    raise DataBaseError(
+                        db_name='message_broker',
+                        message='Message not published',
+                        error_type='Broker did not receive Basic.Ack',
+                        critical=True
+                    )
 
         except DataBaseError as error:
             raise HTTPException(status_code=http.backoff_error.code, detail=error.message)
 
-        return result
+        return result_db
 
     async def insert(self, query, message_to_broker=None):
 
-        result = await self._execute(query)
+        result = await self._execute(query, message_to_broker)
 
         if result:
-            if message_to_broker:
-                await message_broker_factory.publish(**message_to_broker.dict())
             return f'Created at {result}'
         return 'Already exist'
 
