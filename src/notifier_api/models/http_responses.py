@@ -19,6 +19,7 @@ class HTTPResponses(BaseOrjson):
     """Все варианты ответов API, собранные в одном месте."""
 
     ok: Response = Response(message=status.OK.phrase, code=status.OK.value)
+    accepted: Response = Response(message=status.ACCEPTED.phrase, code=status.ACCEPTED.value)
     not_found: Response = Response(message=status.NOT_FOUND.phrase, code=status.NOT_FOUND.value)
     created: Response = Response(message=status.CREATED.phrase, code=status.CREATED.value)
     bad_request: Response = Response(message=status.BAD_REQUEST.phrase, code=status.BAD_REQUEST.value)
