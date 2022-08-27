@@ -1,93 +1,148 @@
 """Модуль содержит CRUD для работы с шаблонами email сообщений"""
-from logging import getLogger
-from uuid import uuid4
+from fastapi import Response
+from uuid import UUID
 
-from fastapi import APIRouter, Depends, Header
-from sqlalchemy import select, create_engine
+from fastapi import APIRouter, Depends, Header, HTTPException
+from sqlalchemy import delete, update, func, and_, select
 from sqlalchemy.dialects.postgresql import insert
-from sqlalchemy.orm import Session
 
 from db.models.email_templates import HTMLTemplates
 from db.storage.orm_factory import get_db, AsyncPGClient
-from notifier_api.models.event import EventFromUser
-from notifier_api.models.standards_response import BaseNotificationsResponse
-# from models.event import EventFromUser
 from notifier_api.models.http_responses import http  # type: ignore
+from notifier_api.models.notifier_html_template import HtmlTemplatesResponse, HtmlTemplatesRequest, HtmlTemplatesQuery, \
+    HtmlTemplatesResponseSelected
+from notifier_api.services.emails_factory import get_emails_factory, EmailsFactory
+from utils.custom_exceptions import DataBaseError
 from utils.custom_fastapi_router import LoggedRoute
-# from models.standards_response import BaseNotificationsResponse
-# from services.event_broker import event_broker
-from utils.dependencies import authorization_required, requests_per_minute, get_user_id_from_token, new_event
+from utils.dependencies import requests_per_minute
 
 router = APIRouter(
     prefix='/html_templates',
-    # tags=['html_templates'],
-    # dependencies=[Depends(authorization_required)]
-    # dependencies=[Depends(requests_per_minute(3))],
     route_class=LoggedRoute,
 )
 
+
 @router.post(
-    '/',
+    path='/',
     status_code=http.created.code,
-    response_model=BaseNotificationsResponse,
-    summary='Records an event',
-    description='Endpoint writes a rating to the database',
-    response_description='Returns the answer whether the event is recorded in the database',
-    dependencies=[Depends(requests_per_minute(10))]
+    response_model=HtmlTemplatesResponse,
+    summary='Create new template',
+    description='Endpoint writes new template into database',
+    response_description='Returns the answer whether the template is recorded in the database',
+    dependencies=[Depends(requests_per_minute(3))]
 )
-async def post_rating(
-    rating: EventFromUser,
-    authorization: str = Header(default=None, description='12345'),  # noqa: B008
-    x_request_log_message: str = Header(default=None, include_in_schema=False),
-    db: AsyncPGClient = Depends(get_db)
-) -> BaseNotificationsResponse:
-    """
-    Ручка записывает событие в базу данных.
+async def new_template(
+    template: HtmlTemplatesRequest,
+    factory: EmailsFactory = Depends(get_emails_factory),
+    idempotency_key: UUID = Header(description='UUID4'),  # noqa: B008
+) -> HtmlTemplatesResponse:
 
-    Args:
-        rating: pydantic модель, с распарсиными из body запроса данными, нужными для вставки в БД
-        authorization: header Authorization из клиентского запроса (JWT токен клиента)
+    query_data = HtmlTemplatesQuery(**template.dict())
+    query_data.id = idempotency_key
 
-    Returns:
-        Вернёт подтверждение, что операция прошла успешно, или уточнение, что именно пошло не так.
-    """
-    # user_id = await get_user_id_from_token(authorization)
-    # event_data = await new_event(
-    #     event=rating,
-    #     user_id=user_id,
-    #     topic=router.tags[0],
-    #     method='create'
-    # )
-    #
-    # await event_broker.put(event_data)
-    values_list = [{'template': '22 in list', 'id': uuid4()}]
-    query = insert(HTMLTemplates).returning(HTMLTemplates.id).values(values_list)
-    do_nothing_query = query.on_conflict_do_nothing(index_elements=['id'])
-    query_select = select(HTMLTemplates)
+    query = insert(HTMLTemplates)
+    query = query.returning(HTMLTemplates.created_at)
+    query = query.values(**query_data.dict(exclude={'msg', 'templates_selected'}))
+    idempotent_query = query.on_conflict_do_nothing(index_elements=['id'])
 
-    # engine = create_engine("postgresql://app:123qwe@localhost/notifications")
-    # session = Session(engine)
-    # result = session.execute(do_nothing_query)
+    query_data.msg = await factory.insert(idempotent_query)
+
+    return query_data
 
 
-    # Штука работает.
-    # result = db.session.iterate(do_nothing_query)
-    # async for row in result:
-    #     print(row.template)
+@router.delete(
+    path='/{template_id}',
+    status_code=http.ok.code,
+    response_model=HtmlTemplatesResponse,
+    summary='Delete template',
+    description='Endpoint delete template from database',
+    response_description='Returns the answer whether the template is deleted from the database',
+    dependencies=[Depends(requests_per_minute(3))]
+)
+async def new_template(
+    template_id: UUID,
+    response: Response,
+    factory: EmailsFactory = Depends(get_emails_factory),
+) -> HtmlTemplatesResponse:
 
-    result = await db.execute(do_nothing_query)
-    print(result)
+    query_data = HtmlTemplatesQuery(id=template_id)
 
-    result_1 = await db.execute(query_select)
-    for row in result_1:
-        print(row.template)
+    query = update(HTMLTemplates)
+    query = query.returning(HTMLTemplates.deleted_at)
+    query = query.filter(
+        and_(
+            HTMLTemplates.id == query_data.id,
+            HTMLTemplates.deleted_at == None  # noqa: E711
+        )
+    )
+    query = query.values(deleted_at=func.now())
+
+    query_data.msg = await factory.delete(query, response)
+
+    return query_data
 
 
-    # print(result)
-    logger.info('Hello!')
-    answer = {'metadata': http.created}
-    # return BaseNotificationsResponse(metadata=http.created)
-    return answer
+@router.get(
+    path='/{template_id}',
+    status_code=http.ok.code,
+    response_model=HtmlTemplatesResponseSelected,
+    summary='Get one template',
+    description='Endpoint returns template data from database',
+    response_description='Template data',
+    dependencies=[Depends(requests_per_minute(3))]
+)
+async def get_template(
+    template_id: UUID,
+    response: Response,
+    factory: EmailsFactory = Depends(get_emails_factory),
+) -> HtmlTemplatesResponse:
+
+    query_data = HtmlTemplatesQuery(id=template_id)
+
+    query = select(
+        HTMLTemplates.id,
+        HTMLTemplates.title,
+        HTMLTemplates.template
+    )
+    query = query.filter(
+        and_(
+            HTMLTemplates.id == query_data.id,
+            HTMLTemplates.deleted_at == None  # noqa: E711
+        )
+    )
+
+    query_data.msg, query_data.templates_selected = await factory.select(query, response)
+
+    return query_data
 
 
-logger = getLogger(__name__)
+@router.get(
+    path='/',
+    status_code=http.ok.code,
+    response_model=HtmlTemplatesResponseSelected,
+    summary='Get all templates',
+    description='Endpoint returns all templates data from database',
+    response_description='Templates data',
+    dependencies=[Depends(requests_per_minute(3))]
+)
+async def get_all_templates(
+    response: Response,
+    factory: EmailsFactory = Depends(get_emails_factory),
+) -> HtmlTemplatesResponse:
+
+    query_data = HtmlTemplatesQuery()
+
+    query = select(
+        HTMLTemplates.id,
+        HTMLTemplates.title,
+        HTMLTemplates.template
+    )
+    query = query.filter(
+        and_(
+            HTMLTemplates.deleted_at == None  # noqa: E711
+        )
+    )
+
+    query_data.msg, query_data.templates_selected = await factory.select(query, response)
+
+    return query_data

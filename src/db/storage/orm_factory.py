@@ -6,11 +6,12 @@ from sqlalchemy.sql import Update, Select, Insert, Delete
 
 from config.settings import config
 from db.storage.abstract_classes import AbstractDBClient
+from utils.async_backoff import timeout_limiter
 
 
 class AsyncPGClient(AbstractDBClient):
     """Класс создаёт сессию для асинхронной работы с Postgres."""
-    def __init__(self):
+    def __init__(self) -> None:
         user = config.pg.login.get_secret_value()
         password = config.pg.password.get_secret_value()
         host = config.pg.host
@@ -25,6 +26,7 @@ class AsyncPGClient(AbstractDBClient):
         """Метод закрывает соединение с БД."""
         await self.session.disconnect()
 
+    @timeout_limiter(max_timeout=10, logger_name='db.orm_factory.execute')
     async def execute(self, query: Union[Update, Select, Insert, Delete]):
         """
         Метод выполняет запрос в БД.

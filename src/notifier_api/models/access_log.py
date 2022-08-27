@@ -1,15 +1,15 @@
-"""Модуль содержит pydantic модель с данными запроса и ответа для access лога."""
+"""Модуль содержит pydantic модели для парсинга запроса и ответа для access лога."""
 from typing import Optional, Union, List
 
 from models.base_orjson import BaseOrjson  # type: ignore
 from pydantic import validator
 
 
-class AccessPath(BaseOrjson):
+class PathToLoggerName(BaseOrjson):
 
     """Преобразование пути в имя логгера."""
 
-    name: str
+    name: Union[str, dict]
 
     @validator('name')
     def convert_path_to_name(cls, path: str) -> str:  # noqa: WPS110, N805
@@ -72,3 +72,30 @@ class Client(BaseOrjson):
         port = url[1]
 
         return f'{host}:{port}'
+
+
+class LogData(BaseOrjson):
+
+    """Имя логгера и текст сообщения для логгера о запросе."""
+
+    logger_name: Optional[str]
+    message: Optional[str]
+
+
+class RequestValidationErrorData(BaseOrjson):
+
+    """Данные из исключения для лога и response."""
+
+    detail: Optional[str]
+    source: Optional[str]
+    field: Optional[str]
+    msg: Optional[str]
+
+
+class PydanticValidationErrorData(BaseOrjson):
+
+    """Данные из исключения для лога и response."""
+
+    detail: Optional[str]
+    source: Optional[str]
+    msg: Optional[str]

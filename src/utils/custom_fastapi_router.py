@@ -5,7 +5,7 @@ from typing import Callable, Tuple
 from fastapi.routing import APIRoute
 from fastapi import Request, Response
 
-from notifier_api.models.access_log import AccessPath, XRequestID, Client
+from notifier_api.models.access_log import PathToLoggerName, XRequestID, Client
 
 
 class LoggedRoute(APIRoute):
@@ -40,9 +40,7 @@ class LoggedRoute(APIRoute):
             # поэтому мы создадим имя логгера из url запроса
             logger_name, request_log_message = await parse_request_for_logging(request)
 
-            # Дополнительные заголовки нужны для логирования текущего запроса
-            # на уровне Depends функций, выполняющих предварительную обработку (before request),
-            # например, проверку авторизации.
+            # Дополнительные заголовки нужны для логирования текущего запроса.
             await set_headers_for_logging(request, request_log_message, logger_name)
 
             response: Response = await original_route_handler(request)
@@ -67,13 +65,19 @@ async def parse_request_for_logging(request: Request) -> Tuple[str, str]:
         Кортеж с именем логгера и строкой сообщения для логирования запроса.
     """
 
-    logger_name = AccessPath(name=request.scope['path'])
     x_request_id = XRequestID(value=request.scope['headers'])
     method = request.method
     client = Client(url=request.scope['client'])
-    body = await request.json()
+    path_prm = request.path_params
+    query_prm = request.query_params
+    body = {}
 
-    return logger_name.name, f'{method} {client.url} {x_request_id.value} {body}'
+    logger_name = PathToLoggerName(name=request.scope['path'])
+
+    if await request.body():
+        body = await request.json()
+
+    return logger_name.name, f'{method} {client.url} {x_request_id.value} {path_prm} {query_prm} {body}'  # noqa: WPS221
 
 
 async def parse_response_for_logging(response: Response) -> str:
