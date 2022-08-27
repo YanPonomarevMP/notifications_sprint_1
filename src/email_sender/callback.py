@@ -14,7 +14,7 @@ from email_sender.models.message_data import MessageData
 from email_sender.services.email_sender import sender_service
 
 
-async def callback(message: AbstractIncomingMessage):
+async def callback(message: AbstractIncomingMessage) -> None:
     """
     Функция-обработчик сообщений.
 
