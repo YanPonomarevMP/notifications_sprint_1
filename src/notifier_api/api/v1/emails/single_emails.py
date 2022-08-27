@@ -12,7 +12,7 @@ from db.storage.orm_factory import get_db, AsyncPGClient
 from notifier_api.models.http_responses import http  # type: ignore
 from notifier_api.models.notifier_single_emails import SingleEmailsResponse, SingleEmailsRequest, SingleEmailsQuery, \
     SingleEmailsResponseSelected, SingleEmailsRequestUpdate
-from notifier_api.services.emails_factory import get_html_templates_factory, HtmlTemplatesFactory
+from notifier_api.services.emails_factory import get_html_templates_factory, EmailsFactory
 from utils.custom_exceptions import DataBaseError
 from utils.custom_fastapi_router import LoggedRoute
 from utils.dependencies import requests_per_minute
@@ -34,7 +34,7 @@ router = APIRouter(
 )
 async def new_email(
     template: SingleEmailsRequest,
-    factory: HtmlTemplatesFactory = Depends(get_html_templates_factory),
+    factory: EmailsFactory = Depends(get_html_templates_factory),
     idempotency_key: str = Header(description='UUID4'),  # noqa: B008
 ) -> SingleEmailsResponse:
 
@@ -63,7 +63,7 @@ async def new_email(
 async def update_email(
     template: SingleEmailsRequestUpdate,
     response: Response,
-    factory: HtmlTemplatesFactory = Depends(get_html_templates_factory),
+    factory: EmailsFactory = Depends(get_html_templates_factory),
 ) -> SingleEmailsResponse:
 
     query_data = SingleEmailsQuery(**template.dict())
@@ -90,7 +90,7 @@ async def update_email(
 async def delete_email(
     email_id: UUID,
     response: Response,
-    factory: HtmlTemplatesFactory = Depends(get_html_templates_factory),
+    factory: EmailsFactory = Depends(get_html_templates_factory),
 ) -> SingleEmailsResponse:
 
     query_data = SingleEmailsQuery(id=email_id)
@@ -123,7 +123,7 @@ async def delete_email(
 async def get_email(
     email_id: UUID,
     response: Response,
-    factory: HtmlTemplatesFactory = Depends(get_html_templates_factory),
+    factory: EmailsFactory = Depends(get_html_templates_factory),
 ) -> SingleEmailsResponse:
 
     query_data = SingleEmailsQuery(id=email_id)
@@ -159,7 +159,7 @@ async def get_email(
 )
 async def get_all_templates(
     response: Response,
-    factory: HtmlTemplatesFactory = Depends(get_html_templates_factory),
+    factory: EmailsFactory = Depends(get_html_templates_factory),
 ) -> SingleEmailsResponse:
 
     query_data = SingleEmailsQuery()

@@ -8,7 +8,7 @@ from notifier_api.models.http_responses import http
 from utils.custom_exceptions import DataBaseError
 
 
-class HtmlTemplatesFactory:
+class EmailsFactory:
     def __init__(self, orm: AbstractDBClient):
         self.orm = orm
 
@@ -62,4 +62,4 @@ class HtmlTemplatesFactory:
 
 
 async def get_html_templates_factory(database: AsyncPGClient = Depends(get_db)):
-    return HtmlTemplatesFactory(orm=database)
+    return EmailsFactory(orm=database)
