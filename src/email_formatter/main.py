@@ -35,7 +35,7 @@ async def shutdown() -> None:
 
     """Функция для действий во время завершения работы приложения."""
 
-    await aiohttp_session.session.close()
+    await aiohttp_session.session.close()  # type: ignore
     await orm_factory.db.stop()
 
 
