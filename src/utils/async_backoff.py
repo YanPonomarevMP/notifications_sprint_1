@@ -5,17 +5,15 @@ from functools import wraps
 from logging import getLogger
 from typing import Union, Callable, Any
 
-from fastapi import HTTPException
-
-from notifier_api.models.http_responses import http
 from utils.custom_exceptions import DataBaseError
 
+
 def timeout_limiter(
-        max_timeout: Union[int, float],
-        logger_name: str,
-        start_sleep_time: Union[int, float] = 0.1,
-        factor: Union[int, float] = 2,
-        border_sleep_time: Union[int, float] = 10
+    max_timeout: Union[int, float],
+    logger_name: str,
+    start_sleep_time: Union[int, float] = 0.1,
+    factor: Union[int, float] = 2,
+    border_sleep_time: Union[int, float] = 10
 ) -> Callable:
     """
     Функция для повторного выполнения функции через некоторое время, если возникла ошибка.
@@ -94,5 +92,7 @@ def timeout_limiter(
                             error_type=str(error),
                             critical=True
                         )
+
         return inner
+
     return func_wrapper
