@@ -2,6 +2,7 @@ from logging import getLogger
 
 from fastapi import HTTPException, Depends
 
+from db.message_brokers.rabbit_message_broker import message_broker_factory
 from db.storage.abstract_classes import AbstractDBClient
 from db.storage.orm_factory import AsyncPGClient, get_db
 from notifier_api.models.http_responses import http
@@ -21,11 +22,13 @@ class EmailsFactory:
 
         return result
 
-    async def insert(self, query):
+    async def insert(self, query, message_to_broker=None):
 
         result = await self._execute(query)
 
         if result:
+            if message_to_broker:
+                await message_broker_factory.publish(**message_to_broker.dict())
             return f'Created at {result}'
         return 'Already exist'
 

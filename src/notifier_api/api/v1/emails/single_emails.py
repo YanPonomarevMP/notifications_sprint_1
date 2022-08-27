@@ -12,6 +12,7 @@ from db.models.email_single_notifications import SingleEmails
 from db.models.email_templates import HTMLTemplates
 from db.storage.orm_factory import get_db, AsyncPGClient
 from notifier_api.models.http_responses import http  # type: ignore
+from notifier_api.models.message_broker_models import MessageBrokerData
 from notifier_api.models.notifier_single_emails import SingleEmailsResponse, SingleEmailsRequest, SingleEmailsQuery, \
     SingleEmailsResponseSelected, SingleEmailsRequestUpdate
 from notifier_api.services.emails_factory import get_emails_factory, EmailsFactory
@@ -49,14 +50,14 @@ async def new_email(
     query = query.values(**query_data.dict(exclude={'msg', 'emails_selected'}))
     idempotent_query = query.on_conflict_do_nothing(index_elements=['id'])
 
-    await message_broker_factory.publish(
+    message_to_broker = MessageBrokerData(
         message_body=query_data.id.bytes,
         queue_name=config.rabbit_mq.queue_raw_single_messages,
         message_headers={'x-request-id': x_request_id},
         delay=query_data.delay
     )
 
-    query_data.msg = await factory.insert(idempotent_query)
+    query_data.msg = await factory.insert(idempotent_query, message_to_broker)
 
     return query_data
 
