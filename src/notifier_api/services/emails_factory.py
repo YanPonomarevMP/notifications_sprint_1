@@ -19,6 +19,15 @@ class HtmlTemplatesFactory(BaseExecuteFactory):
             return f'Created at {result}'
         return 'Already exist'
 
+    async def update(self, query, response):
+
+        result = await self._execute(query)
+
+        if result:
+            return f'Updated at {result}'
+        response.status_code = http.not_found.code
+        return 'Not found'
+
     async def delete(self, query, response):
 
         result = await self._execute(query)

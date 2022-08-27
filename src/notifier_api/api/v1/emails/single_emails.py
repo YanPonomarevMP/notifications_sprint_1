@@ -12,7 +12,7 @@ from db.storage.orm_factory import get_db, AsyncPGClient
 from notifier_api.models.http_responses import http  # type: ignore
 from notifier_api.models.notifier_single_emails import SingleEmailsResponse, SingleEmailsRequest, SingleEmailsQuery, \
     SingleEmailsResponseSelected, SingleEmailsRequestUpdate
-from notifier_api.services.html_templates_factory import get_html_templates_factory, HtmlTemplatesFactory
+from notifier_api.services.emails_factory import get_html_templates_factory, HtmlTemplatesFactory
 from utils.custom_exceptions import DataBaseError
 from utils.custom_fastapi_router import LoggedRoute
 from utils.dependencies import requests_per_minute
