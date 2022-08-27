@@ -32,6 +32,7 @@ from pamqp.commands import Basic
 
 from config.settings import config
 from db.message_brokers.abstract_classes import AbstractMessageBroker
+from utils.async_backoff import timeout_limiter
 
 
 class RabbitMessageBroker(AbstractMessageBroker):
@@ -67,6 +68,7 @@ class RabbitMessageBroker(AbstractMessageBroker):
         finally:  # Даже если украинские националисты будут под москвой мы всё равно закроем соединение. :)
             await connection.close()
 
+    @timeout_limiter(max_timeout=10, logger_name='db.message_brokers.publish')
     async def publish(
         self,
         message_body: bytes,
