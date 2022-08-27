@@ -36,13 +36,13 @@ router = APIRouter(
     dependencies=[Depends(requests_per_minute(3))]
 )
 async def new_email(
-    template: SingleEmailsRequest,
+    single_email: SingleEmailsRequest,
     factory: EmailsFactory = Depends(get_emails_factory),
     idempotency_key: UUID = Header(description='UUID4'),  # noqa: B008
     x_request_id: str = Header(),  # noqa: B008, WPS204
 ) -> SingleEmailsResponse:
 
-    query_data = SingleEmailsQuery(**template.dict())
+    query_data = SingleEmailsQuery(**single_email.dict())
     query_data.id = idempotency_key
 
     query = insert(SingleEmails)
@@ -51,7 +51,7 @@ async def new_email(
     idempotent_query = query.on_conflict_do_nothing(index_elements=['id'])
 
     message_to_broker = MessageBrokerData(
-        message_body=query_data.id.bytes,
+        message_body=query_data.id,
         queue_name=config.rabbit_mq.queue_raw_single_messages,
         message_headers={'x-request-id': x_request_id},
         delay=query_data.delay
@@ -72,12 +72,12 @@ async def new_email(
     dependencies=[Depends(requests_per_minute(3))]
 )
 async def update_email(
-    template: SingleEmailsRequestUpdate,
+    single_email: SingleEmailsRequestUpdate,
     response: Response,
     factory: EmailsFactory = Depends(get_emails_factory),
 ) -> SingleEmailsResponse:
 
-    query_data = SingleEmailsQuery(**template.dict())
+    query_data = SingleEmailsQuery(**single_email.dict())
 
     query = update(SingleEmails)
     query = query.returning(SingleEmails.created_at)
@@ -168,7 +168,7 @@ async def get_email(
     response_description='emails data',
     dependencies=[Depends(requests_per_minute(3))]
 )
-async def get_all_templates(
+async def get_all_emails(
     response: Response,
     factory: EmailsFactory = Depends(get_emails_factory),
 ) -> SingleEmailsResponse:
