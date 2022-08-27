@@ -1,5 +1,5 @@
 """Модуль содержит содержимое для логгеров в виде pydantic моделей."""
-from notifier_api.models.base_orjson import BaseOrjson
+from notifier_api.models.base_orjson import BaseOrjson  # type: ignore
 
 
 class LogError(BaseOrjson):

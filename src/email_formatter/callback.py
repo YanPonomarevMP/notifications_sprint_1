@@ -61,7 +61,7 @@ async def callback(message: AbstractIncomingMessage) -> None:  # noqa: WPS231,WP
 
         # Проверяем подписан ли пользователь на сообщение.
         if not formatter_service.check_subscription(notification_data.user_data.groups, notification_data.group):
-            logger.info(log_names.error.drop_message, f'User is not subscribed for message', message_data.x_request_id)
+            logger.info(log_names.error.drop_message, 'User is not subscribed for message', message_data.x_request_id)
             return await message.ack()
 
         html_text = await formatter_service.render_html(
