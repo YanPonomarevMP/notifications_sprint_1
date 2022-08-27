@@ -42,16 +42,14 @@ async def callback(message: AbstractIncomingMessage) -> None:  # noqa: WPS231,WP
     )
 
     if message_data.count_retry > config.rabbit_mq.max_retry_count:
-        content = f'Too many repeat inserts in the queue. X-Request-Id {message_data.x_request_id}'
-        logger.info(log_names.error.drop_message, content)
+        logger.info(log_names.error.drop_message, 'Too many repeat inserts in the queue', message_data.x_request_id)
         return await message.ack()
 
     locked = await formatter_service.lock(message_data.notification_id)
 
     # Если не удалось заблокировать, значит уже обработано.
     if not locked:
-        content = f'Message has being processed by someone or deleted. X-Request-Id {message_data.x_request_id}'
-        logger.info(log_names.error.drop_message, content)
+        logger.info(log_names.error.drop_message, 'Message has being processed or deleted', message_data.x_request_id)
         return await message.ack()
 
     # Начало транзакции.
@@ -63,8 +61,7 @@ async def callback(message: AbstractIncomingMessage) -> None:  # noqa: WPS231,WP
 
         # Проверяем подписан ли пользователь на сообщение.
         if not formatter_service.check_subscription(notification_data.user_data.groups, notification_data.group):
-            content = f'User is not subscribed for message {message_data.notification_id}.'
-            logger.info(log_names.error.drop_message, content)
+            logger.info(log_names.error.drop_message, f'User is not subscribed for message', message_data.x_request_id)
             return await message.ack()
 
         html_text = await formatter_service.render_html(
@@ -86,8 +83,7 @@ async def callback(message: AbstractIncomingMessage) -> None:  # noqa: WPS231,WP
             queue_name=config.rabbit_mq.queue_formatted_single_messages,
             message_headers={'x-request-id': message_data.x_request_id}
         )
-        content = f'id {message_data.notification_id}. X-Request-Id {message_data.x_request_id}'
-        logger.info(log_names.info.success_completed, content)
+        logger.info(log_names.info.success_completed, f'id {message_data.notification_id}', message_data.x_request_id)
         return await message.ack()  # Только после всех этих действий мы можем сказать очереди — перемога.
 
     except Exception as error:

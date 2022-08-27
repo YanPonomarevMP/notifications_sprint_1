@@ -7,7 +7,7 @@ class LogError(BaseOrjson):
     """Критические ошибки."""
 
     failed_get: str = 'Failed get %s from %s'
-    drop_message: str = 'Dropped message because %s'
+    drop_message: str = 'Dropped message because %s. X-Request-Id %s'
 
 
 class LogInfo(BaseOrjson):
@@ -16,7 +16,7 @@ class LogInfo(BaseOrjson):
 
     success_get: str = 'Successful get %s from %s'
     accepted: str = 'Accepted for processing %s'
-    success_completed: str = 'Success completed processing %s'
+    success_completed: str = 'Success completed processing %s. X-Request-Id %s'
     started: str = 'Started %s'
 
 
@@ -24,7 +24,7 @@ class LogWarning(BaseOrjson):
 
     """Предостережения."""
 
-    retrying: str = 'Retrying message %s due to %s'
+    retrying: str = 'Retrying message %s due to %s. X-Request-Id %s'
 
 
 class LogNames(BaseOrjson):

@@ -43,16 +43,14 @@ async def callback(message: AbstractIncomingMessage) -> None:
         subject=message.body
     )
     if message_data.count_retry > config.rabbit_mq.max_retry_count:
-        content = f'Too many repeat inserts in the queue. X-Request-Id {message_data.x_request_id}'
-        logger.info(log_names.error.drop_message, content)
+        logger.info(log_names.error.drop_message, 'Too many repeat inserts in the queue', message_data.x_request_id)
         return await message.ack()
 
     locked = await sender_service.lock(message_data.notification_id)
 
     # Если не удалось заблокировать, значит уже обработано (или удалено).
     if not locked:
-        content = f'Message has being processed by someone or deleted. X-Request-Id {message_data.x_request_id}'
-        logger.info(log_names.error.drop_message, content)
+        logger.info(log_names.error.drop_message, 'Message has being processed or deleted', message_data.x_request_id)
         return await message.ack()
 
     # Начало транзакции.
@@ -61,8 +59,7 @@ async def callback(message: AbstractIncomingMessage) -> None:
         smtp_response = await sender_service.post_notification(notification)
         await sender_service.post_response(message_data.notification_id, smtp_response)
 
-        content = f'id {message_data.notification_id}. X-Request-Id {message_data.x_request_id}'
-        logger.info(log_names.info.success_data_sent, content)
+        logger.info(log_names.info.success_data_sent, f'id {message_data.notification_id}', message_data.x_request_id)
         return await message.ack()  # Говорим — перемога!
 
     except Exception as error:
