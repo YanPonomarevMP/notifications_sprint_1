@@ -4,7 +4,7 @@ from typing import Union
 import orjson
 from pydantic import validator
 
-from email_sender.models.base_config import BaseConfigModel
+from email_sender.models.base_config import BaseConfigModel  # type: ignore
 
 
 class MessageData(BaseConfigModel):
@@ -46,7 +46,7 @@ class MessageData(BaseConfigModel):
         return message['headers']['x-death'][0]['count']
 
     @validator('notification_id')
-    def get_notification_id(cls, message: bytes) -> str:
+    def get_notification_id(cls, message: bytes) -> str:  # noqa: WPS615
         """
         Метод достаёт нужный ключ.
 
@@ -59,7 +59,7 @@ class MessageData(BaseConfigModel):
         return orjson.loads(message)['notification_id']
 
     @validator('html')
-    def get_html(cls, message: bytes) -> str:
+    def get_html(cls, message: bytes) -> str:  # noqa: WPS615
         """
         Метод достаёт нужный ключ.
 
@@ -72,7 +72,7 @@ class MessageData(BaseConfigModel):
         return orjson.loads(message)['html']
 
     @validator('reply_to')
-    def get_reply_to(cls, message: bytes) -> str:
+    def get_reply_to(cls, message: bytes) -> str:  # noqa: WPS615
         """
         Метод достаёт нужный ключ.
 
@@ -85,7 +85,7 @@ class MessageData(BaseConfigModel):
         return orjson.loads(message)['reply_to']
 
     @validator('to')
-    def get_to_user(cls, message: bytes) -> str:
+    def get_to_user(cls, message: bytes) -> str:  # noqa: WPS615
         """
         Метод достаёт нужный ключ.
 
@@ -98,7 +98,7 @@ class MessageData(BaseConfigModel):
         return orjson.loads(message)['to']
 
     @validator('subject')
-    def get_subject(cls, message: bytes) -> str:
+    def get_subject(cls, message: bytes) -> str:  # noqa: WPS615
         """
         Метод достаёт нужный ключ.
 

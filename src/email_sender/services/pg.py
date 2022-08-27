@@ -28,6 +28,12 @@ class DBService:  # noqa: WPS214
         self.db = database
 
     async def mark_as_sent_at(self, notification_id: Union[UUID, str]) -> bool:
+        """
+        Метод ставит отметку о том, что сообщение отправлено.
+
+        Args:
+            notification_id: id сообщения
+        """
         query = update(
             SingleEmails
         ).filter(
@@ -49,6 +55,12 @@ class DBService:  # noqa: WPS214
         return bool(result)
 
     async def unmark_as_sent_at(self, notification_id: Union[UUID, str]) -> None:
+        """
+        Метод убирает отметку о том, что сообщение отправлено.
+
+        Args:
+            notification_id: id сообщения
+        """
         query = update(
             SingleEmails
         ).filter(
@@ -62,6 +74,13 @@ class DBService:  # noqa: WPS214
         await self.db.execute(query)
 
     async def mark_as_sent_result(self, notification_id: Union[UUID, str], result: str) -> None:
+        """
+        Метод проставляет в БД ответ от SMTP сервера.
+
+        Args:
+            notification_id: id сообщения
+            result: ответ сервера
+        """
         query = update(
             SingleEmails
         ).filter(
