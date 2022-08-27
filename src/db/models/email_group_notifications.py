@@ -4,7 +4,7 @@
 from uuid import uuid4
 
 from sqlalchemy import Column, Integer, DateTime, func, Text
-from sqlalchemy.dialects.postgresql import UUID, JSON
+from sqlalchemy.dialects.postgresql import UUID, JSON, BOOLEAN
 
 from db.db_init import Base
 
@@ -20,6 +20,7 @@ class GroupEmails(Base):
     subject = Column(Text, nullable=False)
     message = Column(JSON, nullable=False)
     delay = Column(Integer, default=0, nullable=False)
+    send_with_gmt = Column(BOOLEAN, default=False, nullable=False)
     created_at = Column(DateTime(timezone=True), default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
     deleted_at = Column(DateTime(timezone=True))
