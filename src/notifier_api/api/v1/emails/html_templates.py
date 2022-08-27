@@ -11,7 +11,7 @@ from db.storage.orm_factory import get_db, AsyncPGClient
 from notifier_api.models.http_responses import http  # type: ignore
 from notifier_api.models.notifier_html_template import HtmlTemplatesResponse, HtmlTemplatesRequest, HtmlTemplatesQuery, \
     HtmlTemplatesResponseSelected
-from notifier_api.services.emails_factory import get_html_templates_factory, EmailsFactory
+from notifier_api.services.emails_factory import get_emails_factory, EmailsFactory
 from utils.custom_exceptions import DataBaseError
 from utils.custom_fastapi_router import LoggedRoute
 from utils.dependencies import requests_per_minute
@@ -33,7 +33,7 @@ router = APIRouter(
 )
 async def new_template(
     template: HtmlTemplatesRequest,
-    factory: EmailsFactory = Depends(get_html_templates_factory),
+    factory: EmailsFactory = Depends(get_emails_factory),
     idempotency_key: str = Header(description='UUID4'),  # noqa: B008
 ) -> HtmlTemplatesResponse:
 
@@ -62,7 +62,7 @@ async def new_template(
 async def new_template(
     template_id: UUID,
     response: Response,
-    factory: EmailsFactory = Depends(get_html_templates_factory),
+    factory: EmailsFactory = Depends(get_emails_factory),
 ) -> HtmlTemplatesResponse:
 
     query_data = HtmlTemplatesQuery(id=template_id)
@@ -94,7 +94,7 @@ async def new_template(
 async def get_template(
     template_id: UUID,
     response: Response,
-    factory: EmailsFactory = Depends(get_html_templates_factory),
+    factory: EmailsFactory = Depends(get_emails_factory),
 ) -> HtmlTemplatesResponse:
 
     query_data = HtmlTemplatesQuery(id=template_id)
@@ -127,7 +127,7 @@ async def get_template(
 )
 async def get_all_templates(
     response: Response,
-    factory: EmailsFactory = Depends(get_html_templates_factory),
+    factory: EmailsFactory = Depends(get_emails_factory),
 ) -> HtmlTemplatesResponse:
 
     query_data = HtmlTemplatesQuery()

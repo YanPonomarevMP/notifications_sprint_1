@@ -61,5 +61,5 @@ class EmailsFactory:
         return 'Not found', templates_selected
 
 
-async def get_html_templates_factory(database: AsyncPGClient = Depends(get_db)):
+async def get_emails_factory(database: AsyncPGClient = Depends(get_db)):
     return EmailsFactory(orm=database)
