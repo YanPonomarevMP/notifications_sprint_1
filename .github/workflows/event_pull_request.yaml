@@ -2,8 +2,9 @@
 name: pull request event
 
 on:
-    pull_request:
-        branches: [ main ]
+#    pull_request:
+#        branches: [ main ]
+    push:
 
 jobs:
     linter:
@@ -37,7 +38,7 @@ jobs:
                 uses: appleboy/telegram-action@master
                 with:
                     # Настройте секреты в github (Settings.Secrets.Actions)
-                    # secrets.TELEGRAM_TO — id чата, можно получить так:
+                    # secrets.TELEGRAM_TO — id чата, можно получить так (предварительно запустив бота):
                     # curl https://api.telegram.org/bot<token>/getUpdates (["result"]["chat"]["id"])
                     # secrets.TELEGRAM_TOKEN — токен, выдаваемый BotFather-ом при создании бота
                     to: ${{ secrets.TELEGRAM_TO }}
