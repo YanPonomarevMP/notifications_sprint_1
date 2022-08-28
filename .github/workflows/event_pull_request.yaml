@@ -42,7 +42,7 @@ jobs:
                     # secrets.TELEGRAM_TOKEN — токен, выдаваемый BotFather-ом при создании бота
                     to: ${{ secrets.TELEGRAM_TO }}
                     token: ${{ secrets.TELEGRAM_TOKEN }}
-                    message: |
+                    message: | 
                         Repository: ${{ github.repository }}
                         
                         Linters passed: ${{ steps.linters.outcome }}
