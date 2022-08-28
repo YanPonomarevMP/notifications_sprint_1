@@ -8,20 +8,20 @@ from sqlalchemy.dialects.postgresql import insert
 
 from config.settings import config
 from db.message_brokers.rabbit_message_broker import message_broker_factory
-from db.models.email_single_notifications import SingleEmails
+from db.models.email_group_notifications import GroupEmails
 from db.models.email_templates import HTMLTemplates
 from db.storage.orm_factory import get_db, AsyncPGClient
 from notifier_api.models.http_responses import http  # type: ignore
 from notifier_api.models.message_broker_models import MessageBrokerData
-from notifier_api.models.notifier_single_emails import SingleEmailsResponse, SingleEmailsRequest, SingleEmailsQuery, \
-    SingleEmailsResponseSelected, SingleEmailsRequestUpdate, SingleEmailsSelected
+from notifier_api.models.notifier_group_emails import GroupEmailsResponse, GroupEmailsRequest, GroupEmailsQuery, \
+    GroupEmailsResponseSelected, GroupEmailsRequestUpdate, GroupEmailsSelected
 from notifier_api.services.emails_factory import get_emails_factory, EmailsFactory
 from utils.custom_exceptions import DataBaseError
 from utils.custom_fastapi_router import LoggedRoute
 from utils.dependencies import requests_per_minute
 
 router = APIRouter(
-    prefix='/single_emails',
+    prefix='/group_emails',
     route_class=LoggedRoute,
 )
 
@@ -29,24 +29,24 @@ router = APIRouter(
 @router.post(
     path='/',
     status_code=http.accepted.code,
-    response_model=SingleEmailsResponse,
+    response_model=GroupEmailsResponse,
     summary='Create new email',
     description='Endpoint accepts email for processing',
     response_description='Returns the answer whether the email accepted but not sent yet',
     dependencies=[Depends(requests_per_minute(3))]
 )
 async def new_email(
-    single_email: SingleEmailsRequest,
+    single_email: GroupEmailsRequest,
     factory: EmailsFactory = Depends(get_emails_factory),
     idempotency_key: UUID = Header(description='UUID4'),  # noqa: B008
     x_request_id: str = Header(),  # noqa: B008, WPS204
-) -> SingleEmailsResponse:
+) -> GroupEmailsResponse:
 
-    query_data = SingleEmailsQuery(**single_email.dict())
+    query_data = GroupEmailsQuery(**single_email.dict())
     query_data.id = idempotency_key
 
-    query = insert(SingleEmails)
-    query = query.returning(SingleEmails.created_at)
+    query = insert(GroupEmails)
+    query = query.returning(GroupEmails.created_at)
     query = query.values(**query_data.dict(exclude={'msg', 'emails_selected'}))
     idempotent_query = query.on_conflict_do_nothing(index_elements=['id'])
 
@@ -65,27 +65,27 @@ async def new_email(
 @router.put(
     path='/',
     status_code=http.ok.code,
-    response_model=SingleEmailsResponse,
+    response_model=GroupEmailsResponse,
     summary='Create new email',
     description='Endpoint accepts email for processing',
     response_description='Returns the answer whether the email accepted but not sent yet',
     dependencies=[Depends(requests_per_minute(3))]
 )
 async def update_email(
-    single_email: SingleEmailsRequestUpdate,
+    single_email: GroupEmailsRequestUpdate,
     response: Response,
     factory: EmailsFactory = Depends(get_emails_factory),
-) -> SingleEmailsResponse:
+) -> GroupEmailsResponse:
 
-    query_data = SingleEmailsQuery(**single_email.dict())
+    query_data = GroupEmailsQuery(**single_email.dict())
 
-    query = update(SingleEmails)
-    query = query.returning(SingleEmails.created_at)
+    query = update(GroupEmails)
+    query = query.returning(GroupEmails.created_at)
     query = query.filter(
         and_(
-            SingleEmails.id == query_data.id,
-            SingleEmails.deleted_at == None,  # noqa: E711
-            SingleEmails.passed_to_handler_at == None  # noqa: E711
+            GroupEmails.id == query_data.id,
+            GroupEmails.deleted_at == None,  # noqa: E711
+            GroupEmails.passed_to_handler_at == None  # noqa: E711
         )
     )
     query = query.values(**query_data.dict(exclude={'msg', 'emails_selected', 'id'}))
@@ -98,7 +98,7 @@ async def update_email(
 @router.delete(
     path='/{email_id}',
     status_code=http.ok.code,
-    response_model=SingleEmailsResponse,
+    response_model=GroupEmailsResponse,
     summary='Delete email',
     description='Endpoint delete email from database before send',
     response_description='Returns the answer whether the email is deleted',
@@ -108,17 +108,17 @@ async def delete_email(
     email_id: UUID,
     response: Response,
     factory: EmailsFactory = Depends(get_emails_factory),
-) -> SingleEmailsResponse:
+) -> GroupEmailsResponse:
 
-    query_data = SingleEmailsQuery(id=email_id)
+    query_data = GroupEmailsQuery(id=email_id)
 
-    query = update(SingleEmails)
-    query = query.returning(SingleEmails.deleted_at)
+    query = update(GroupEmails)
+    query = query.returning(GroupEmails.deleted_at)
     query = query.filter(
         and_(
-            SingleEmails.id == query_data.id,
-            SingleEmails.deleted_at == None,  # noqa: E711
-            SingleEmails.passed_to_handler_at == None  # noqa: E711
+            GroupEmails.id == query_data.id,
+            GroupEmails.deleted_at == None,  # noqa: E711
+            GroupEmails.passed_to_handler_at == None  # noqa: E711
         )
     )
     query = query.values(deleted_at=func.now())
@@ -131,7 +131,7 @@ async def delete_email(
 @router.get(
     path='/{email_id}',
     status_code=http.ok.code,
-    response_model=SingleEmailsResponseSelected,
+    response_model=GroupEmailsResponseSelected,
     summary='Get one email',
     description='Endpoint returns email data from database',
     response_description='Email data',
@@ -141,27 +141,28 @@ async def get_email(
     email_id: UUID,
     response: Response,
     factory: EmailsFactory = Depends(get_emails_factory),
-) -> SingleEmailsResponse:
+) -> GroupEmailsResponse:
 
-    query_data = SingleEmailsQuery(id=email_id)
+    query_data = GroupEmailsQuery(id=email_id)
 
     query = select(
-        SingleEmails.id,
-        SingleEmails.source,
-        SingleEmails.destination_id,
-        SingleEmails.template_id,
-        SingleEmails.subject,
-        SingleEmails.message,
-        SingleEmails.delay
+        GroupEmails.id,
+        GroupEmails.source,
+        GroupEmails.destination_id,
+        GroupEmails.template_id,
+        GroupEmails.subject,
+        GroupEmails.message,
+        GroupEmails.delay,
+        GroupEmails.send_with_gmt
     )
     query = query.filter(
         and_(
-            SingleEmails.id == query_data.id,
-            SingleEmails.deleted_at == None  # noqa: E711
+            GroupEmails.id == query_data.id,
+            GroupEmails.deleted_at == None  # noqa: E711
         )
     )
 
-    query_data.msg, query_data.emails_selected = await factory.select(query, response, SingleEmailsSelected)
+    query_data.msg, query_data.emails_selected = await factory.select(query, response, GroupEmailsSelected)
 
     return query_data
 
@@ -169,7 +170,7 @@ async def get_email(
 @router.get(
     path='/',
     status_code=http.ok.code,
-    response_model=SingleEmailsResponseSelected,
+    response_model=GroupEmailsResponseSelected,
     summary='Get all emails',
     description='Endpoint returns all emails data from database',
     response_description='emails data',
@@ -178,25 +179,26 @@ async def get_email(
 async def get_all_emails(
     response: Response,
     factory: EmailsFactory = Depends(get_emails_factory),
-) -> SingleEmailsResponse:
+) -> GroupEmailsResponse:
 
-    query_data = SingleEmailsQuery()
+    query_data = GroupEmailsQuery()
 
     query = select(
-        SingleEmails.id,
-        SingleEmails.source,
-        SingleEmails.destination_id,
-        SingleEmails.template_id,
-        SingleEmails.subject,
-        SingleEmails.message,
-        SingleEmails.delay
+        GroupEmails.id,
+        GroupEmails.source,
+        GroupEmails.destination_id,
+        GroupEmails.template_id,
+        GroupEmails.subject,
+        GroupEmails.message,
+        GroupEmails.delay,
+        GroupEmails.send_with_gmt
     )
     query = query.filter(
         and_(
-            SingleEmails.deleted_at == None  # noqa: E711
+            GroupEmails.deleted_at == None  # noqa: E711
         )
     )
 
-    query_data.msg, query_data.emails_selected = await factory.select(query, response, SingleEmailsSelected)
+    query_data.msg, query_data.emails_selected = await factory.select(query, response, GroupEmailsSelected)
 
     return query_data

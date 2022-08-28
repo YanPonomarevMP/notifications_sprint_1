@@ -6,6 +6,7 @@ from db.message_brokers.rabbit_message_broker import message_broker_factory
 from db.storage.abstract_classes import AbstractDBClient
 from db.storage.orm_factory import AsyncPGClient, get_db
 from notifier_api.models.http_responses import http
+from notifier_api.models.notifier_single_emails import SingleEmailsRequestUpdate, SingleEmailsSelected
 from utils.custom_exceptions import DataBaseError
 
 
@@ -56,18 +57,18 @@ class EmailsFactory:
         response.status_code = http.not_found.code
         return 'Not found'
 
-    async def select(self, query, response):
+    async def select(self, query, response, selected_model):
 
-        templates_selected = []
+        selected_data = []
         result = await self._execute(query)
 
         if result:
             for row in result:
-                templates_selected.append(dict(row._mapping))  # noqa: WPS437
-            return 'Successfully selected', templates_selected
+                selected_data.append(selected_model(**dict(row._mapping)))  # noqa: WPS437
+            return 'Successfully selected', selected_data
 
         response.status_code = http.not_found.code
-        return 'Not found', templates_selected
+        return 'Not found', selected_data
 
 
 async def get_emails_factory(database: AsyncPGClient = Depends(get_db)):
