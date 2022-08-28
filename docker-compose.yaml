@@ -49,7 +49,7 @@ services:
             - ./nginx/site.conf:/etc/nginx/conf.d/site.conf:ro
             - /tmp/logs/nginx/:/var/log/nginx/
 #        depends_on:
-#            - ugc_api
+#            - notifier_test_api
         ports:
             - 80:80
         restart: always

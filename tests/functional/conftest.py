@@ -1,7 +1,6 @@
 """Модуль содержит фикстуры для pytest."""
 import asyncio
-from typing import Generator, Callable, AsyncGenerator
-from uuid import uuid4
+from typing import Optional, Callable, Generator
 
 import aiohttp
 import pytest
@@ -22,42 +21,46 @@ def event_loop() -> Generator:
 
 
 @pytest.fixture(scope='session')
-async def x_request_id() -> str:
-    """Фикстура возвращает идентификатор запроса."""
-    return str(uuid4)
-
-
-@pytest.fixture(scope='session')
-async def authorization() -> str:
-    """Фикстура возвращает access токен."""
-    return 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJmcmVzaCI6ZmFsc2UsImlhdCI6MTY1MzY1ODEzOSwianRpIjoiYTJiM2UwNGMtZWYzMC00NThjLTlmOTktOGZjNTNjZmRmNmQ0IiwidHlwZSI6ImFjY2VzcyIsInN1YiI6eyJpYXQiOiJGcmksIDI3IE1heSAyMDIyIDEzOjI4OjU5IEdNVCIsInR0bCI6MzAwMDAsInVzZXJfaWQiOiJlZmMzMTIzNy1hNWJmLTQxNGUtYmE5NS1mMTVmMGYxNmQzZjUiLCJ1c2VyX3JvbGVzIjpbXSwidXNlcl9maW5nZXJwcmludCI6IlBvc3RtYW5SdW50aW1lLzcuMjguNCIsImFjY2Vzc190b2tlbl9pZCI6IjdmNzI0ODc0LWQwMzgtNGEwOS1hMzA5LWUzOWFiMDZkZTg5OSIsInJlZnJlc2hfdG9rZW5faWQiOiJlODMzYTNkMi0xYzAzLTQ3YTAtYmRkOC0wYTRmMTE4ZjZkNDMifSwibmJmIjoxNjUzNjU4MTM5LCJleHAiOjE2NTM2ODgxMzl9.Ir8BbkPyGPByuDBzEqrpJZ99z3AcCICbyJWDgyESus4'
-
-
-@pytest.fixture(scope='session')
-async def session() -> AsyncGenerator:
+async def session() -> Generator:
     """Фикстура возвращает AIOHTTP сессию."""
     session = aiohttp.ClientSession()
     yield session
     await session.close()
 
 
-@pytest.fixture(scope='session')
-def make_request_post(session: aiohttp.ClientSession) -> Callable:
+@pytest.fixture
+def make_get_request(session: aiohttp.ClientSession) -> Callable:
     """
-    Фикстура возвращает функцию для выполнения POST запросов к API.
-
+    Фикстура возвращает функцию для выполнения запросов к API.
     Args:
         session: AIOHTTP сессия
 
     Returns:
-        Возвращает функцию для выполнения POST запросов к API.
+        Возвращает функцию для выполнения запросов к API.
     """
 
-    async def inner(handle: str, headers: dict, body: dict) -> HTTPResponse:
-        """Функция выполняет http запрос."""
-        url = f'{settings.ugc_api.url}{settings.ugc_api.prefix}{handle}'
+    async def inner(
+        method: str,
+        handle: str,
+        headers: Optional[dict] = None,
+        params: Optional[dict] = None,
+        body: Optional[dict] = None
+    ) -> HTTPResponse:
+        """
+        Функция выполняет http запрос.
+        Args:
+            handle: ручка API
+            params: параметры запроса
 
-        async with session.post(url, json=body, headers=headers) as response:
+        Returns:
+            Pydantic модель с ответом сервера.
+        """
+        params = params or {}
+        headers = headers or {}
+        json = body or {}
+        url = f'{settings.notifier_test_api.url}{settings.notifier_test_api.prefix}{handle}'
+
+        async with session.post(url, json=json, headers=headers, params=params) as response:
             return HTTPResponse(
                 body=await response.json(),
                 headers=response.headers,
