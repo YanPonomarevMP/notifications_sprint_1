@@ -46,7 +46,7 @@ jobs:
                     message: | 
                         Repository: ${{ github.repository }}
                         
-                        Linters passed: ${{ steps.linters.outcome }}
+                        Linters passed: ${{ steps }}
                         
                         Pull request message: ${{ github.event.pull_request[0].message }}
                         See changes: https://github.com/${{ github.repository }}/pull/${{github.event.pull_request.head.sha}}
