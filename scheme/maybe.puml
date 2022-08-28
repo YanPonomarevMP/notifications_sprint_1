@@ -41,8 +41,6 @@ package "notifier" {
     }
     database notifier_postgres as "notifications" {
     }
-    database notifier_cache as "redis cache" {
-    }
     queue notifier_queue as "rabbit" {
     }
 }
@@ -82,12 +80,11 @@ notifier_api -right-> notifier_queue
 notifier_formatter <-up-> notifier_queue
 notifier_email_sender <-up-> notifier_queue
 
-notifier_formatter <-down-> notifier_cache
-notifier_cache <--> auth_api
-notifier_formatter <-right-> notifier_postgres
+notifier_formatter <---> auth_api
+notifier_formatter <--> notifier_postgres
 notifier_email_sender <--> notifier_postgres
 
-notifier_group_handler <-down-> notifier_cache
+notifier_group_handler <--> auth_api
 notifier_group_handler <-up-> notifier_queue
 notifier_group_handler <-down-> notifier_postgres
 
