@@ -23,8 +23,8 @@ jobs:
                     python -m pip install --upgrade pip
                     pip install flake8 mypy wemake-python-styleguide types-requests
 
-            -   name: Flake8
-                run: flake8 . --config setup.cfg
+#            -   name: Flake8
+#                run: flake8 . --config setup.cfg
 
             -   name: Mypy
                 run: mypy .
