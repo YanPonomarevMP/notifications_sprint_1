@@ -3,14 +3,14 @@ name: pull request event
 
 on:
     pull_request:
-        branches: [ main, master ]  # У всех разные главные ветки. Кто-то консервативен и использует master :)
+        branches: [ main ]
 
 jobs:
     linter:
         runs-on: ubuntu-latest
         strategy:
             matrix:
-                python-version: [ '3.7', '3.8', '3.9' ]
+                python-version: [ '3.8', '3.9' ]
         name: linters with python ${{ matrix.python-version }}  # Удобно же видеть какая сейчас версия.
         steps:
             -   uses: actions/checkout@v2
