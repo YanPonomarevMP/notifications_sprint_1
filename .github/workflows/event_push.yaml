@@ -23,7 +23,7 @@ jobs:
                 run: poetry update
 
             -   name: Flake8
-                run: flake8 .
+                run: poetry run flake8 .
 
             -   name: Mypy
-                run: mypy .
+                run: poetry run mypy .
