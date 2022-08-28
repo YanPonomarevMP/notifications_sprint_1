@@ -22,14 +22,23 @@ def event_loop() -> Generator:
 
 @pytest.fixture(scope='session')
 async def session() -> Generator:
-    """Фикстура возвращает AIOHTTP сессию."""
+    """
+    Фикстура возвращает методы aiohttp сессии в виде словаря.
+
+    """
     session = aiohttp.ClientSession()
-    yield session
+    methods = {
+        'POST': session.post,
+        'GET': session.get,
+        'PUT': session.put,
+        'DEL': session.delete
+    }
+    yield methods
     await session.close()
 
 
 @pytest.fixture
-def make_get_request(session: aiohttp.ClientSession) -> Callable:
+def make_get_request(session: dict) -> Callable:
     """
     Фикстура возвращает функцию для выполнения запросов к API.
     Args:
@@ -58,9 +67,9 @@ def make_get_request(session: aiohttp.ClientSession) -> Callable:
         params = params or {}
         headers = headers or {}
         json = body or {}
-        url = f'{settings.notifier_test_api.url}{settings.notifier_test_api.prefix}{handle}'
+        url = f'{settings.api.url}{settings.api.prefix}{handle}'
 
-        async with session.post(url, json=json, headers=headers, params=params) as response:
+        async with session[method](url, json=json, headers=headers, params=params) as response:
             return HTTPResponse(
                 body=await response.json(),
                 headers=response.headers,
