@@ -7,13 +7,44 @@ services:
         container_name: notifications_api
         expose:
             - 8000
-#        volumes:
-#            - api_data:/data
-#        env_file:
-#            - "src/.env_app"
-#        depends_on:
-#            - database
-#            - vault
+        volumes:
+            - api_data:/data
+        depends_on:
+            - database
+            - vault
+
+    email_formatter:
+        build:
+            context: ./src
+            dockerfile: email_formatter.Dockerfile
+        container_name: email_formatter
+        volumes:
+            - email_formatter_data:/data
+        depends_on:
+            - api
+            - rabbit_mq
+
+    email_sender:
+        build:
+            context: ./src
+            dockerfile: email_sender.Dockerfile
+        container_name: email_sender
+        volumes:
+            - email_sender_data:/data
+        depends_on:
+            - api
+            - rabbit_mq
+
+    group_handler:
+        build:
+            context: ./src
+            dockerfile: group_handler.Dockerfile
+        container_name: group_handler
+        volumes:
+            - group_handler_data:/data
+        depends_on:
+            - api
+            - rabbit_mq
 
     database:
         build:
@@ -86,4 +117,7 @@ volumes:
     vault_logs:
     redis_data:
     rabbit_data:
-#    api_data:
+    api_data:
+    email_formatter_data:
+    email_sender_data:
+    group_handler_data:
