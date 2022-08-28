@@ -111,7 +111,7 @@ async def get_template(
         )
     )
 
-    query_data.msg, query_data.templates_selected = await factory.select(query, response)
+    query_data.msg, query_data.templates_selected = await factory.select(query, response, HtmlTemplateSelected)
 
     return query_data
 

@@ -61,7 +61,7 @@ async def new_email(
 
     message_to_broker = MessageBrokerData(
         message_body=query_data.id,
-        queue_name=config.rabbit_mq.queue_raw_single_messages,
+        queue_name=config.rabbit_mq.queue_raw_group_messages,
         message_headers={'x-request-id': x_request_id},
         delay=query_data.delay
     )
