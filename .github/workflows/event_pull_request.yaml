@@ -25,9 +25,11 @@ jobs:
                     pip install flake8==4.0.1 mypy==0.950 wemake-python-styleguide==0.16.1 types-requests==2.27.29
 
             -   name: Flake8
+                id: flake8
                 run: flake8 .
 
             -   name: Mypy
+                id: mypy
                 run: mypy .
     Telegram:
         name: Telegram message
@@ -46,7 +48,7 @@ jobs:
                     message: | 
                         Repository: ${{ github.repository }}
                         
-                        Linters passed: ${{ steps }}
+                        Linters passed: ${{ steps.mypy }} ${{ steps.flake8 }}
                         
                         Pull request message: ${{ github.event.pull_request[0].message }}
                         See changes: https://github.com/${{ github.repository }}/pull/${{github.event.pull_request.head.sha}}
