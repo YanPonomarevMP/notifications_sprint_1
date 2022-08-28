@@ -30,4 +30,3 @@ class TestSettings(BaseSettings):
 
 
 settings = TestSettings()
-print()
