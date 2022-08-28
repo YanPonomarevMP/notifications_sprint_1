@@ -40,6 +40,15 @@ class HtmlTemplatesResponse(BaseOrjson):
     msg: Optional[Union[datetime, str]]
 
 
+class HtmlTemplateSelected(BaseOrjson):
+
+    """Модель для работы с данными при обработке запроса"""
+
+    id: Optional[UUID]
+    title: Optional[str]
+    template: Optional[str]
+
+
 class HtmlTemplatesResponseSelected(BaseOrjson):
 
     """Формат ответа UGC API."""

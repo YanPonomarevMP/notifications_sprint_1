@@ -10,7 +10,7 @@ from db.models.email_templates import HTMLTemplates
 from db.storage.orm_factory import get_db, AsyncPGClient
 from notifier_api.models.http_responses import http  # type: ignore
 from notifier_api.models.notifier_html_template import HtmlTemplatesResponse, HtmlTemplatesRequest, HtmlTemplatesQuery, \
-    HtmlTemplatesResponseSelected
+    HtmlTemplatesResponseSelected, HtmlTemplateSelected
 from notifier_api.services.emails_factory import get_emails_factory, EmailsFactory
 from utils.custom_exceptions import DataBaseError
 from utils.custom_fastapi_router import LoggedRoute
@@ -59,7 +59,7 @@ async def new_template(
     response_description='Returns the answer whether the template is deleted from the database',
     dependencies=[Depends(requests_per_minute(3))]
 )
-async def new_template(
+async def delete_template(
     template_id: UUID,
     response: Response,
     factory: EmailsFactory = Depends(get_emails_factory),
@@ -143,6 +143,6 @@ async def get_all_templates(
         )
     )
 
-    query_data.msg, query_data.templates_selected = await factory.select(query, response)
+    query_data.msg, query_data.templates_selected = await factory.select(query, response, HtmlTemplateSelected)
 
     return query_data
