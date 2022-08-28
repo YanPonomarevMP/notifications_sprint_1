@@ -1,12 +1,13 @@
+"""Модуль содержит pydantic классы."""
 from typing import Dict, Optional
-from uuid import UUID, uuid4
+from uuid import UUID
 
 from group_handler.models.base_config import BaseConfigModel
 
 
 class DataSingleEmails(BaseConfigModel):
 
-    """Данные, поступившие от клиента."""
+    """Данные для вставки в SingleEmails."""
 
     id: Optional[UUID]
     source: str
