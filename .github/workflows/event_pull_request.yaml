@@ -2,8 +2,9 @@
 name: pull request event
 
 on:
-    pull_request:
-        branches: [ main ]
+#    pull_request:
+#        branches: [ main ]
+    push:
 
 jobs:
     linter:
