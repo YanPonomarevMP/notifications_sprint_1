@@ -3,7 +3,9 @@ from datetime import datetime
 from typing import Optional, Union, List, Dict
 from uuid import UUID
 
+import orjson
 from models.base_orjson import BaseOrjson  # type: ignore
+from pydantic import validator
 
 from notifier_api.models.http_responses import http  # type: ignore
 
@@ -59,6 +61,37 @@ class SingleEmailsResponse(BaseOrjson):
 
     id: Optional[UUID]
     msg: Optional[Union[datetime, str]]
+
+
+class SingleEmailsSelected(BaseOrjson):
+
+    """Данные, поступившие от клиента."""
+
+    id: UUID
+    source: str
+    destination_id: UUID
+    template_id: UUID
+    subject: str
+    message: Union[Dict, str]
+    delay: int
+
+    class Config:
+        """Настройка валидации при изменении значения поля."""
+
+        validate_assignment = True
+
+    @validator('message', pre=True)
+    def encode_to_bytes(cls, filed_value: Union[str, dict]) -> Dict:  # noqa: WPS110, N805
+        """
+        Метод преобразует значение поля в байты.
+
+        Args:
+            filed_value: значение, которое нужно преобразовать в байты
+
+        Returns:
+            Вернёт байт строку.
+        """
+        return orjson.loads(filed_value)  # type: ignore
 
 
 class SingleEmailsResponseSelected(BaseOrjson):

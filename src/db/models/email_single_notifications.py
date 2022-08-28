@@ -4,7 +4,7 @@
 from uuid import uuid4
 
 from sqlalchemy import Column, Integer, DateTime, func, Text
-from sqlalchemy.dialects.postgresql import UUID, JSON
+from sqlalchemy.dialects.postgresql import UUID, JSON, JSONB
 
 from db.db_init import Base
 
@@ -19,7 +19,7 @@ class SingleEmails(Base):
     template_id = Column(UUID(as_uuid=True), nullable=False)
     group_id = Column(UUID(as_uuid=True), index=True)
     subject = Column(Text, nullable=False)
-    message = Column(JSON, nullable=False)
+    message = Column(JSONB, nullable=False)
     delay = Column(Integer, default=0, nullable=False)
     created_at = Column(DateTime(timezone=True), default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())

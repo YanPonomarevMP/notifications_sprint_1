@@ -1,19 +1,22 @@
-from logging import getLogger
+from typing import Union, Optional
 
-from fastapi import HTTPException, Depends
+from fastapi import HTTPException, Depends, Response
 
 from db.message_brokers.rabbit_message_broker import message_broker_factory
 from db.storage.abstract_classes import AbstractDBClient
 from db.storage.orm_factory import AsyncPGClient, get_db
-from notifier_api.models.http_responses import http
+from notifier_api.models.http_responses import http  # type: ignore
+from notifier_api.models.message_broker_models import MessageBrokerData
 from utils.custom_exceptions import DataBaseError
 
+from sqlalchemy import update, select
+from sqlalchemy.dialects.postgresql import insert
 
 class EmailsFactory:
     def __init__(self, orm: AbstractDBClient):
         self.orm = orm
 
-    async def _execute(self, query, message_to_broker=None):
+    async def _execute(self, query: Union[update, select, insert], message_to_broker: MessageBrokerData = None)  -> Optional[list]:
         try:
             result_db = await self.orm.execute(query)
             if result_db and message_to_broker:
@@ -30,7 +33,7 @@ class EmailsFactory:
 
         return result_db
 
-    async def insert(self, query, message_to_broker=None):
+    async def insert(self, query: Union[update, select, insert], message_to_broker: MessageBrokerData = None) -> str:
 
         result = await self._execute(query, message_to_broker)
 
@@ -38,7 +41,7 @@ class EmailsFactory:
             return f'Created at {result}'
         return 'Already exist'
 
-    async def update(self, query, response):
+    async def update(self, query: Union[update, select, insert], response: Response) -> str:
 
         result = await self._execute(query)
 
@@ -47,7 +50,7 @@ class EmailsFactory:
         response.status_code = http.not_found.code
         return 'Not found'
 
-    async def delete(self, query, response):
+    async def delete(self, query: Union[update, select, insert], response: Response) -> str:
 
         result = await self._execute(query)
 
@@ -56,19 +59,19 @@ class EmailsFactory:
         response.status_code = http.not_found.code
         return 'Not found'
 
-    async def select(self, query, response):
+    async def select(self, query: select, response, selected_model) -> tuple:
 
-        templates_selected = []
+        selected_data = []
         result = await self._execute(query)
 
         if result:
             for row in result:
-                templates_selected.append(dict(row._mapping))  # noqa: WPS437
-            return 'Successfully selected', templates_selected
+                selected_data.append(selected_model(**dict(row._mapping)))  # noqa: WPS437
+            return 'Successfully selected', selected_data
 
         response.status_code = http.not_found.code
-        return 'Not found', templates_selected
+        return 'Not found', selected_data
 
 
-async def get_emails_factory(database: AsyncPGClient = Depends(get_db)):
+async def get_emails_factory(database: AsyncPGClient = Depends(get_db)) -> EmailsFactory:
     return EmailsFactory(orm=database)

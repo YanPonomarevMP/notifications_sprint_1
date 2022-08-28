@@ -14,7 +14,7 @@ from db.storage.orm_factory import get_db, AsyncPGClient
 from notifier_api.models.http_responses import http  # type: ignore
 from notifier_api.models.message_broker_models import MessageBrokerData
 from notifier_api.models.notifier_single_emails import SingleEmailsResponse, SingleEmailsRequest, SingleEmailsQuery, \
-    SingleEmailsResponseSelected, SingleEmailsRequestUpdate
+    SingleEmailsResponseSelected, SingleEmailsRequestUpdate, SingleEmailsSelected
 from notifier_api.services.emails_factory import get_emails_factory, EmailsFactory
 from utils.custom_exceptions import DataBaseError
 from utils.custom_fastapi_router import LoggedRoute
@@ -36,13 +36,13 @@ router = APIRouter(
     dependencies=[Depends(requests_per_minute(3))]
 )
 async def new_email(
-    template: SingleEmailsRequest,
+    single_email: SingleEmailsRequest,
     factory: EmailsFactory = Depends(get_emails_factory),
     idempotency_key: UUID = Header(description='UUID4'),  # noqa: B008
     x_request_id: str = Header(),  # noqa: B008, WPS204
 ) -> SingleEmailsResponse:
 
-    query_data = SingleEmailsQuery(**template.dict())
+    query_data = SingleEmailsQuery(**single_email.dict())
     query_data.id = idempotency_key
 
     query = insert(SingleEmails)
@@ -51,7 +51,7 @@ async def new_email(
     idempotent_query = query.on_conflict_do_nothing(index_elements=['id'])
 
     message_to_broker = MessageBrokerData(
-        message_body=query_data.id.bytes,
+        message_body=query_data.id,
         queue_name=config.rabbit_mq.queue_raw_single_messages,
         message_headers={'x-request-id': x_request_id},
         delay=query_data.delay
@@ -72,16 +72,22 @@ async def new_email(
     dependencies=[Depends(requests_per_minute(3))]
 )
 async def update_email(
-    template: SingleEmailsRequestUpdate,
+    single_email: SingleEmailsRequestUpdate,
     response: Response,
     factory: EmailsFactory = Depends(get_emails_factory),
 ) -> SingleEmailsResponse:
 
-    query_data = SingleEmailsQuery(**template.dict())
+    query_data = SingleEmailsQuery(**single_email.dict())
 
     query = update(SingleEmails)
     query = query.returning(SingleEmails.created_at)
-    query = query.filter(SingleEmails.id == query_data.id)
+    query = query.filter(
+        and_(
+            SingleEmails.id == query_data.id,
+            SingleEmails.deleted_at == None,  # noqa: E711
+            SingleEmails.passed_to_handler_at == None  # noqa: E711
+        )
+    )
     query = query.values(**query_data.dict(exclude={'msg', 'emails_selected', 'id'}))
 
     query_data.msg = await factory.update(query, response)
@@ -141,6 +147,7 @@ async def get_email(
 
     query = select(
         SingleEmails.id,
+        SingleEmails.source,
         SingleEmails.destination_id,
         SingleEmails.template_id,
         SingleEmails.subject,
@@ -154,41 +161,6 @@ async def get_email(
         )
     )
 
-    query_data.msg, query_data.emails_selected = await factory.select(query, response)
-
-    return query_data
-
-
-@router.get(
-    path='/',
-    status_code=http.ok.code,
-    response_model=SingleEmailsResponseSelected,
-    summary='Get all emails',
-    description='Endpoint returns all emails data from database',
-    response_description='emails data',
-    dependencies=[Depends(requests_per_minute(3))]
-)
-async def get_all_templates(
-    response: Response,
-    factory: EmailsFactory = Depends(get_emails_factory),
-) -> SingleEmailsResponse:
-
-    query_data = SingleEmailsQuery()
-
-    query = select(
-        SingleEmails.id,
-        SingleEmails.destination_id,
-        SingleEmails.template_id,
-        SingleEmails.subject,
-        SingleEmails.message,
-        SingleEmails.delay
-    )
-    query = query.filter(
-        and_(
-            SingleEmails.deleted_at == None  # noqa: E711
-        )
-    )
-
-    query_data.msg, query_data.emails_selected = await factory.select(query, response)
+    query_data.msg, query_data.emails_selected = await factory.select(query, response, SingleEmailsSelected)
 
     return query_data

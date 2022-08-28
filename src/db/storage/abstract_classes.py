@@ -15,6 +15,6 @@ class AbstractDBClient(ABC):
         pass
 
     @abstractmethod
-    async def execute(self, query):
-        """Метод закрывает соединение с БД."""
+    async def execute(self, query) -> None:
+        """Метод выполняет запрос в БД."""
         pass
