@@ -1,5 +1,20 @@
 services:
 
+    api:
+        build:
+            context: ./src
+            dockerfile: notifier_api.Dockerfile
+        container_name: notifications_api
+        expose:
+            - 8000
+#        volumes:
+#            - api_data:/data
+#        env_file:
+#            - "src/.env_app"
+#        depends_on:
+#            - database
+#            - vault
+
     database:
         build:
             context: ./postgres
@@ -38,8 +53,8 @@ services:
         expose:
             - 6379
         command: redis-server /usr/local/etc/redis/redis.conf
-#        depends_on:
-#            - vault
+        depends_on:
+            - vault
 
     nginx:
         image: nginx:1.19.2
@@ -48,8 +63,8 @@ services:
             - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
             - ./nginx/site.conf:/etc/nginx/conf.d/site.conf:ro
             - /tmp/logs/nginx/:/var/log/nginx/
-#        depends_on:
-#            - api
+        depends_on:
+            - api
         ports:
             - 80:80
         restart: always
@@ -71,4 +86,4 @@ volumes:
     vault_logs:
     redis_data:
     rabbit_data:
-#    auth_api_data:
+#    api_data:
