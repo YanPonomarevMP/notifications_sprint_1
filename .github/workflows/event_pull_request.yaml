@@ -44,9 +44,11 @@ jobs:
                     to: ${{ secrets.TELEGRAM_TO }}
                     token: ${{ secrets.TELEGRAM_TOKEN }}
                     message: |
+                        Repository: ${{ github.repository }}
+                        Branch: ${{ steps.vars.outputs.branch }}
+                        Sha: ${{ steps.vars.outputs.sha_short }}
+                        
                         ${{ github.actor }} created pull request (linters passed, keep calm 🙂):
                         Pull request message: ${{ github.event.pull_request[0].message }}
-                        
-                        Repository: ${{ github.repository }}
-                        
+
                         See changes: https://github.com/${{ github.repository }}/pull/${{github.event.pull_request.head.sha}}
