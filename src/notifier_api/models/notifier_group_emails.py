@@ -3,11 +3,8 @@ from datetime import datetime
 from typing import Optional, Union, List, Dict
 from uuid import UUID
 
-import orjson
 from models.base_orjson import BaseOrjson  # type: ignore
-from pydantic import validator
 
-from notifier_api.models.http_responses import http  # type: ignore
 from notifier_api.models.notifier_single_emails import SingleEmailsRequest, SingleEmailsRequestUpdate, \
     SingleEmailsQuery, SingleEmailsSelected
 
@@ -28,7 +25,7 @@ class GroupEmailsRequestUpdate(SingleEmailsRequestUpdate):
 
 class GroupEmailsQuery(SingleEmailsQuery):
 
-    """Модель для работы с данными при обработке запроса"""
+    """Модель для работы с данными при обработке запроса."""
 
     send_with_gmt: Optional[bool]
 

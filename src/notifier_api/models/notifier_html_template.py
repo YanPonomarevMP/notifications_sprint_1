@@ -5,8 +5,6 @@ from uuid import UUID
 
 from models.base_orjson import BaseOrjson  # type: ignore
 
-from notifier_api.models.http_responses import http  # type: ignore
-
 
 class HtmlTemplatesRequest(BaseOrjson):
 
@@ -18,7 +16,7 @@ class HtmlTemplatesRequest(BaseOrjson):
 
 class HtmlTemplatesQuery(BaseOrjson):
 
-    """Модель для работы с данными при обработке запроса"""
+    """Модель для работы с данными при обработке запроса."""
 
     id: Optional[UUID]
     title: Optional[str]
@@ -42,7 +40,7 @@ class HtmlTemplatesResponse(BaseOrjson):
 
 class HtmlTemplateSelected(BaseOrjson):
 
-    """Модель для работы с данными при обработке запроса"""
+    """Модель для работы с данными при обработке запроса."""
 
     id: Optional[UUID]
     title: Optional[str]

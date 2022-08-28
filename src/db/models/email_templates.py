@@ -1,6 +1,4 @@
-"""
-Модуль содержит таблицу HTML шаблонов email.
-"""
+"""Модуль содержит таблицу HTML шаблонов email."""
 from uuid import uuid4
 
 from sqlalchemy import Column, DateTime, func, Text
@@ -10,6 +8,9 @@ from db.db_init import Base
 
 
 class HTMLTemplates(Base):  # type: ignore
+
+    """Таблица HTMLTemplates."""
+
     __tablename__ = 'html_templates'
     __table_args__ = {'schema': 'email'}
 

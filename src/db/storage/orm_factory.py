@@ -11,13 +11,18 @@ from utils.async_backoff import timeout_limiter
 
 
 class AsyncPGClient(AbstractDBClient):
+
     """Класс создаёт сессию для асинхронной работы с Postgres."""
+
     def __init__(self) -> None:
+
+        """Конструктор."""
+
         user = config.pg.login.get_secret_value()
         password = config.pg.password.get_secret_value()
         host = config.pg.host
         db_name = config.pg.db_name
-        self.session = databases.Database(f'postgresql://{user}:{password}@{host}/{db_name}')
+        self.session = databases.Database(f'postgresql://{user}:{password}@{host}/{db_name}')  # noqa: WPS221
 
     async def start(self) -> None:
         """Метод создаёт соединение с БД."""
