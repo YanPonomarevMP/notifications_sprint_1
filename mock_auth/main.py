@@ -37,9 +37,8 @@ async def email(
     print()
     print('email_id', email_id)
 
-    # TODO: С этим надо что-то сделать, нельзя это оставлять так.
     return {
-        'email': 'vladasabelnikova@yandex.ru',
+        'email': ...,
         'name': 'vlada',
         'groups': ['52186b1b-7e44-419c-b040-c41e815a6308', 'dba8704f-c69a-431c-80e5-d779d537a123']
     }
@@ -59,7 +58,6 @@ async def email(
     print()
     print('email_id', group_id)
 
-    # TODO: С этим надо что-то сделать, нельзя это оставлять так.
     return [
         {'user_id': 'c9df603e-62d1-467c-b795-e3ecb78e357a', 'hours': 3, 'minutes': 0},
         {'user_id': '3568b0fd-4a29-4bf6-ab20-916145bf499f', 'hours': -2, 'minutes': 30}
