@@ -4,7 +4,7 @@ import uvicorn
 from fastapi import FastAPI, Depends
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import ORJSONResponse
-from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
+from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor  # type: ignore
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from api.v1.emails.main import router as v1_emails_router
