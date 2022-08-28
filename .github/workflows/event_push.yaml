@@ -24,7 +24,7 @@ jobs:
                     pip install flake8 mypy wemake-python-styleguide types-requests
 
             -   name: Flake8
-                run: ls -l
+                run: flake8 .
 
 #            -   name: Mypy
 #                run: mypy .
