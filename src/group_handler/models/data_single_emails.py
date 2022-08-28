@@ -14,4 +14,5 @@ class DataSingleEmails(BaseConfigModel):
     group_id: Optional[UUID]
     subject: str
     message: Dict
-    delay: int
+    delay: int = 0
+    send_with_gmt: bool = False

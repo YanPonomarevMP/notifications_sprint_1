@@ -17,7 +17,6 @@ class RawDataDB(BaseConfigModel):
     message: Union[dict, str]
     source: str
     subject: str
-    delay: int
     send_with_gmt: bool
 
     @validator('message')

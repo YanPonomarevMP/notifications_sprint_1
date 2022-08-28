@@ -5,6 +5,7 @@
 для работы group_handler в одну функцию-обработчик callback.
 """
 import logging
+from asyncio import sleep
 
 import orjson
 from aio_pika.abc import AbstractIncomingMessage
@@ -55,14 +56,18 @@ async def callback(message: AbstractIncomingMessage) -> None:  # noqa: WPS231,WP
 
     # Начало транзакции.
     try:
-        notification_data = await group_handler_service.get_data(
+        result = await group_handler_service.get_data(
             notification_id=message_data.notification_id,
             x_request_id=message_data.x_request_id
         )
-        print()
+        for row in result:
+            print(row)
 
     except Exception as e:
+        # Если не смогли завершить транзакцию, снимаем блокировку и реджектим сообщение.
         print(e)
+        await group_handler_service.unlock(message_data.notification_id)
+        return await message.reject()
 
 
 logger = logging.getLogger('group_handler')

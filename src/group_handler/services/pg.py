@@ -43,7 +43,6 @@ class DBService:  # noqa: WPS214
             GroupEmails.template_id,
             GroupEmails.subject,
             GroupEmails.message,
-            GroupEmails.delay,
             GroupEmails.send_with_gmt
         ).filter(
             and_(
@@ -127,24 +126,24 @@ class DBService:  # noqa: WPS214
 
         return bool(result)
 
-    # async def unmark_as_passed_to_handler(self, notification_id: Union[UUID, str]) -> None:
-    #     """
-    #     Метод убирает отметку о том, что сообщение взято в обработку (дабы не допустить коллизий).
-    #
-    #     Args:
-    #         notification_id: id сообщения
-    #     """
-    #     query = update(
-    #         SingleEmails
-    #     ).filter(
-    #         and_(
-    #             SingleEmails.id == notification_id,
-    #             SingleEmails.deleted_at == None  # noqa: E711
-    #         )
-    #     ).values(
-    #         passed_to_handler_at=None
-    #     )
-    #     await self.db.execute(query)
+    async def unmark_as_passed_to_handler(self, notification_id: Union[UUID, str]) -> None:
+        """
+        Метод убирает отметку о том, что сообщение взято в обработку (дабы не допустить коллизий).
+
+        Args:
+            notification_id: id сообщения
+        """
+        query = update(
+            GroupEmails
+        ).filter(
+            and_(
+                GroupEmails.id == notification_id,
+                GroupEmails.deleted_at == None  # noqa: E711
+            )
+        ).values(
+            passed_to_handler_at=None
+        )
+        await self.db.execute(query)
 
 
 logger = logging.getLogger('group_handler.db_service')
