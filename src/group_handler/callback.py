@@ -56,12 +56,13 @@ async def callback(message: AbstractIncomingMessage) -> None:  # noqa: WPS231,WP
 
     # Начало транзакции.
     try:
-        result = await group_handler_service.get_data(
+        all_users = await group_handler_service.get_data(
             notification_id=message_data.notification_id,
             x_request_id=message_data.x_request_id
         )
-        for row in result:
-            print(row)
+        # print(all_users)
+        await group_handler_service.post_data(**all_users.dict(), x_request_id=message_data.x_request_id)
+        print('всё типа :|')
 
     except Exception as e:
         # Если не смогли завершить транзакцию, снимаем блокировку и реджектим сообщение.

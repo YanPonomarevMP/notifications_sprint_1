@@ -13,9 +13,7 @@ class AuthData(BaseConfigModel):
 
 class NotificationData(BaseConfigModel):
     users: List[DataSingleEmails] = []
-    send_with_gmt: Optional[bool]
 
 
 class FinalData(BaseConfigModel):
     users: List[DataSingleEmails]
-    send_with_gmt: bool

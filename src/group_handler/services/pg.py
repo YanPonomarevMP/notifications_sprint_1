@@ -3,12 +3,15 @@
 Уже высокоуровневая бизнес логика.
 """
 import logging
-from typing import Union, Optional
+from typing import Union, Optional, List
 from uuid import UUID
 
-from sqlalchemy import and_, update, func, select
+from sqlalchemy import and_, update, func, select, insert
 
+from config.settings import config
+from db.message_brokers.rabbit_message_broker import message_broker_factory
 from db.models.email_group_notifications import GroupEmails
+from db.models.email_single_notifications import SingleEmails
 from db.storage.abstract_classes import AbstractDBClient
 from db.storage.orm_factory import db
 from group_handler.models.raw_data_db import RawDataDB
@@ -60,26 +63,6 @@ class DBService:  # noqa: WPS214
         # logger.error(log_names.error.failed_get, notification_id, 'single_emails table')
         return None
 
-    # async def get_template_by_id(self, template_id: Union[UUID, str]) -> Optional[str]:
-    #     """
-    #     Метод достаёт шаблон по template_id.
-    #
-    #     Args:
-    #         template_id: id шаблона
-    #
-    #     Returns:
-    #         Вернёт HTML строку-шаблон.
-    #     """
-    #     query = select(HTMLTemplates.template).filter(HTMLTemplates.id == template_id)
-    #     result = await self.db.execute(query)
-    #
-    #     if result:
-    #         row, = result
-    #         # logger.info(log_names.info.success_get, template_id, 'html_templates table')
-    #         return row.template
-    #
-    #     # logger.error(log_names.error.failed_get, template_id, 'html_templates table')
-    #     return None
 
     async def mark_as_passed_to_handler(self, notification_id: Union[UUID, str]) -> bool:
         """
@@ -144,6 +127,22 @@ class DBService:  # noqa: WPS214
             passed_to_handler_at=None
         )
         await self.db.execute(query)
+
+    async def insert_to_single_emails(self, all_data: List[dict], x_request_id: str):
+        query = insert(
+            SingleEmails
+        ).values(
+            all_data
+        )
+        await self.db.execute(query)
+
+        for row in all_data:
+            await message_broker_factory.publish(
+                message_body=str(row['id']).encode(),
+                queue_name=config.rabbit_mq.queue_raw_single_messages,
+                message_headers={'x-request-id': x_request_id},
+                delay=row['delay']
+            )
 
 
 logger = logging.getLogger('group_handler.db_service')

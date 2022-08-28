@@ -1,6 +1,6 @@
 import logging
-from typing import Union
-from uuid import UUID
+from typing import Union, List
+from uuid import UUID, uuid4
 
 from group_handler.models.all_data import NotificationData, FinalData
 from group_handler.models.data_single_emails import DataSingleEmails
@@ -15,14 +15,15 @@ class GroupHandler:
         raw_data = await db_service.get_raw_data_by_id(notification_id=notification_id)
 
         if raw_data:
-            result.send_with_gmt = raw_data.send_with_gmt
-
             for user in await auth_service.get_by_group(raw_data.destination_id, x_request_id):
                 row_single_emails = DataSingleEmails(**raw_data.dict())
+                row_single_emails.id = uuid4()
                 row_single_emails.destination_id = user.user_id
                 row_single_emails.group_id = notification_id
+
                 if raw_data.send_with_gmt:
                     row_single_emails.delay = self._create_delay(hours=user.hours, minutes=user.minutes)
+
                 result.users.append(row_single_emails)
         return FinalData(**result.dict())
 
@@ -58,6 +59,10 @@ class GroupHandler:
             notification_id: id сообщения
         """
         await db_service.unmark_as_passed_to_handler(notification_id=notification_id)
+
+    async def post_data(self, users: List[dict], x_request_id):
+        ids = (uuid4() for _ in range(len(users)))
+        await db_service.insert_to_single_emails(users, x_request_id)
 
 
 logger = logging.getLogger('group_handler')
