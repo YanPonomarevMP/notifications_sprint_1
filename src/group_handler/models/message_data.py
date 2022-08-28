@@ -3,7 +3,7 @@ from typing import Union
 
 from pydantic import validator
 
-from group_handler.models.base_config import BaseConfigModel
+from group_handler.models.base_config import BaseConfigModel  # type: ignore
 
 
 class MessageData(BaseConfigModel):

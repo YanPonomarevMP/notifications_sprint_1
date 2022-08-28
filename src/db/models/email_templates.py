@@ -9,7 +9,7 @@ from sqlalchemy.dialects.postgresql import UUID
 from db.db_init import Base
 
 
-class HTMLTemplates(Base):
+class HTMLTemplates(Base):  # type: ignore
     __tablename__ = 'html_templates'
     __table_args__ = {'schema': 'email'}
 

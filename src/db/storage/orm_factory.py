@@ -1,7 +1,8 @@
 """Модуль содержит классы для асинхронной работы с БД."""
-from typing import Union
+from typing import Union, Optional, List
 
 import databases
+from databases.interfaces import Record
 from sqlalchemy.sql import Update, Select, Insert, Delete
 
 from config.settings import config
@@ -27,14 +28,15 @@ class AsyncPGClient(AbstractDBClient):
         await self.session.disconnect()
 
     @timeout_limiter(max_timeout=10, logger_name='db.orm_factory.execute')
-    async def execute(self, query: Union[Update, Select, Insert, Delete]):
+    async def execute(self, query: Union[Update, Select, Insert, Delete]) -> Optional[List[Record]]:
         """
         Метод выполняет запрос в БД.
+
         Args:
             query: запрос к БД
 
         Returns:
-
+            Если запрос select — список полей, в противном случае ничего.
         """
         if query.is_select:
             return await self.session.fetch_all(query)
@@ -42,6 +44,7 @@ class AsyncPGClient(AbstractDBClient):
 
 
 db = AsyncPGClient()
+
 
 async def get_db() -> AsyncPGClient:
     """Функция возвращает db объект."""

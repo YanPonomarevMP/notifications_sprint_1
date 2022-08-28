@@ -9,7 +9,7 @@ from config.logging_settings import LOGGING
 from config.settings import config
 from db.message_brokers.rabbit_message_broker import message_broker_factory
 from db.storage import orm_factory
-from group_handler.callback import callback
+from group_handler.callback import callback  # type: ignore
 from utils import aiohttp_session
 
 

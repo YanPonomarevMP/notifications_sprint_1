@@ -9,7 +9,7 @@ from sqlalchemy.dialects.postgresql import UUID, JSON, BOOLEAN, JSONB
 from db.db_init import Base
 
 
-class GroupEmails(Base):
+class GroupEmails(Base):  # type: ignore
     __tablename__ = 'group_emails'
     __table_args__ = {'schema': 'email'}
 
