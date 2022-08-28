@@ -30,7 +30,7 @@ async def test_api_scenarios(make_get_request: Callable) -> None:
         if query.check_body:
             assert response.body == query.expected_body
         if query.check_len_body:
-            assert len(response.body) == len(query.expected_body)
+            assert len(response.body) == len(query.expected_body)  # type: ignore
         if query.check_len_str_body:
             assert len(str(response.body)) == len(str(query.expected_body))
 

@@ -1,6 +1,6 @@
 """Модуль содержит интерфейс для работы с Auth сервисом."""
 import logging
-from typing import Optional, List
+from typing import List
 from uuid import UUID
 
 from config.settings import config
@@ -41,10 +41,10 @@ class AuthService:
         result = await session.get(url, headers=headers)
 
         if result.status != http.ok.code:
-            # logger.error(log_names.error.failed_get, destination_id, 'Auth service')
+            logger.error(log_names.error.failed_get, destination_id, 'Auth service')
             return []
 
-        # logger.info(log_names.info.success_get, destination_id, 'Auth service')
+        logger.info(log_names.info.success_get, destination_id, 'Auth service')
         users_data = await result.json()
         return [AuthData(**user) for user in users_data]
 

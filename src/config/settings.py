@@ -42,6 +42,9 @@ class RabbitSettings(BaseSettings):
 
 
 class PostgresSettings(BaseSettings):
+
+    """Настройки postgres."""
+
     login: SecretStr = vault.get_secret('pg_user')  # имя поля user пересекается с переменной окружения user
     password: SecretStr = vault.get_secret('pg_password')
     host: str = vault.get_secret('pg_host')

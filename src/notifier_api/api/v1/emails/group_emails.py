@@ -33,9 +33,9 @@ router = APIRouter(
 )
 async def new_email(
     group_email: GroupEmailsRequest,
-    factory: EmailsFactory = Depends(get_emails_factory),  # noqa: B008
-    idempotency_key: UUID = Header(description='UUID4'),  # noqa: B008
-    x_request_id: str = Header(),  # noqa: B008, WPS204
+    factory: EmailsFactory = Depends(get_emails_factory),
+    idempotency_key: UUID = Header(description='UUID4'),
+    x_request_id: str = Header(),  # noqa: WPS204
 ) -> GroupEmailsResponse:
     """
     Ручка принимает новый групповой email (рассылку) для отправки.
@@ -83,7 +83,7 @@ async def new_email(
 async def update_email(
     group_email: GroupEmailsRequestUpdate,
     response: Response,
-    factory: EmailsFactory = Depends(get_emails_factory),  # noqa: B008
+    factory: EmailsFactory = Depends(get_emails_factory),
 ) -> GroupEmailsResponse:
     """
     Ручка изменяет сообщение (возможно в течении delay периода).
@@ -127,7 +127,7 @@ async def update_email(
 async def delete_email(
     email_id: UUID,
     response: Response,
-    factory: EmailsFactory = Depends(get_emails_factory),  # noqa: B008
+    factory: EmailsFactory = Depends(get_emails_factory),
 ) -> GroupEmailsResponse:
     """
     Ручка удаляет email (возможно в течении delay периода).
@@ -172,7 +172,7 @@ async def delete_email(
 async def get_email(
     email_id: UUID,
     response: Response,
-    factory: EmailsFactory = Depends(get_emails_factory),  # noqa: B008
+    factory: EmailsFactory = Depends(get_emails_factory),
 ) -> GroupEmailsResponse:
     """
     Ручка возвращает данные конкретного сообщения по id.

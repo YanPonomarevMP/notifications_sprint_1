@@ -1,22 +1,18 @@
-"""Модуль содержит CRUD для работы с шаблонами email сообщений"""
-from fastapi import Response
+"""Модуль содержит CRUD для работы с шаблонами email сообщений."""
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, Header, HTTPException
-from sqlalchemy import delete, update, func, and_, select
+from fastapi import APIRouter, Depends, Header
+from fastapi import Response
+from sqlalchemy import update, func, and_, select
 from sqlalchemy.dialects.postgresql import insert
 
 from config.settings import config
-from db.message_brokers.rabbit_message_broker import message_broker_factory
 from db.models.email_single_notifications import SingleEmails
-from db.models.email_templates import HTMLTemplates
-from db.storage.orm_factory import get_db, AsyncPGClient
 from notifier_api.models.http_responses import http  # type: ignore
 from notifier_api.models.message_broker_models import MessageBrokerData
 from notifier_api.models.notifier_single_emails import SingleEmailsResponse, SingleEmailsRequest, SingleEmailsQuery, \
     SingleEmailsResponseSelected, SingleEmailsRequestUpdate, SingleEmailsSelected
 from notifier_api.services.emails_factory import get_emails_factory, EmailsFactory
-from utils.custom_exceptions import DataBaseError
 from utils.custom_fastapi_router import LoggedRoute
 from utils.dependencies import requests_per_minute
 
@@ -38,10 +34,21 @@ router = APIRouter(
 async def new_email(
     single_email: SingleEmailsRequest,
     factory: EmailsFactory = Depends(get_emails_factory),
-    idempotency_key: UUID = Header(description='UUID4'),  # noqa: B008
-    x_request_id: str = Header(),  # noqa: B008, WPS204
+    idempotency_key: UUID = Header(description='UUID4'),
+    x_request_id: str = Header(),  # noqa: WPS204
 ) -> SingleEmailsResponse:
+    """
+    Ручка создаёт новую почту.
 
+    Args:
+        single_email: данные
+        factory: обработчик запроса
+        idempotency_key: ключ идемпотентности
+        x_request_id: id запроса
+
+    Returns:
+        Сообщение об вставке сообщения или об ошибке.
+    """
     query_data = SingleEmailsQuery(**single_email.dict())
     query_data.id = idempotency_key
 
@@ -76,7 +83,17 @@ async def update_email(
     response: Response,
     factory: EmailsFactory = Depends(get_emails_factory),
 ) -> SingleEmailsResponse:
+    """
+    Ручка обновляет почту.
 
+    Args:
+        single_email: данные почты
+        response: класс Response нужен для изменения статус кода при ошибке
+        factory: обработчик запроса
+
+    Returns:
+        Сообщение об обновлении сообщения или об ошибке.
+    """
     query_data = SingleEmailsQuery(**single_email.dict())
 
     query = update(SingleEmails)
@@ -109,7 +126,17 @@ async def delete_email(
     response: Response,
     factory: EmailsFactory = Depends(get_emails_factory),
 ) -> SingleEmailsResponse:
+    """
+    Ручка удаляет почту по Id.
 
+    Args:
+        email_id: id почты
+        response: класс Response нужен для изменения статус кода при ошибке
+        factory: обработчик
+
+    Returns:
+        Сообщение об удалении или об ошибке.
+    """
     query_data = SingleEmailsQuery(id=email_id)
 
     query = update(SingleEmails)
@@ -142,7 +169,17 @@ async def get_email(
     response: Response,
     factory: EmailsFactory = Depends(get_emails_factory),
 ) -> SingleEmailsResponse:
+    """
+    Ручка достаёт почту по id.
 
+    Args:
+        email_id: id почты
+        response: класс Response нужен для изменения статус кода при ошибке
+        factory:обработчик
+
+    Returns:
+        JSON с данными сообщения или ошибку.
+    """
     query_data = SingleEmailsQuery(id=email_id)
 
     query = select(

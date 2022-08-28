@@ -9,7 +9,7 @@ class PathToLoggerName(BaseOrjson):
 
     """Преобразование пути в имя логгера."""
 
-    name: Union[str, dict]
+    name: str
 
     @validator('name')
     def convert_path_to_name(cls, path: str) -> str:  # noqa: WPS110, N805

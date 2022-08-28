@@ -2,7 +2,7 @@
 from typing import Dict, Optional
 from uuid import UUID
 
-from group_handler.models.base_config import BaseConfigModel
+from group_handler.models.base_config import BaseConfigModel  # type: ignore
 
 
 class DataSingleEmails(BaseConfigModel):

@@ -7,8 +7,6 @@ import orjson
 from models.base_orjson import BaseOrjson  # type: ignore
 from pydantic import validator
 
-from notifier_api.models.http_responses import http  # type: ignore
-
 
 class SingleEmailsRequest(BaseOrjson):
 
@@ -37,7 +35,7 @@ class SingleEmailsRequestUpdate(BaseOrjson):
 
 class SingleEmailsQuery(BaseOrjson):
 
-    """Модель для работы с данными при обработке запроса"""
+    """Модель для работы с данными при обработке запроса."""
 
     id: Optional[UUID]
     source: Optional[str]

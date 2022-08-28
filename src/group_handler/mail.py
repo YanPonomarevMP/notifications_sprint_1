@@ -1,4 +1,14 @@
+"""
+Модуль содержит основную логику работы сервиса.
+Стоит пояснить что вообще делает group_handler:
 
+Его задача принимать сообщение из очереди
+(в сообщении будет вся нужная ему информация),
+ползать в Auth и находить пользователей с group_id аналогичным group_id присланным из очереди.
+
+После этого сгенерировать почту для каждого из этих пользователей и отправить в другую очередь.
+Это сделано для тематических рассылок.
+"""
 import asyncio
 import logging
 from logging import config as logging_config
@@ -9,7 +19,8 @@ from config.logging_settings import LOGGING
 from config.settings import config
 from db.message_brokers.rabbit_message_broker import message_broker_factory
 from db.storage import orm_factory
-from group_handler.callback import callback
+from group_handler.callback import callback  # type: ignore
+from group_handler.models.log import log_names
 from utils import aiohttp_session
 
 
@@ -21,7 +32,7 @@ async def startup() -> None:
     aiohttp_session.session = aiohttp.ClientSession(headers=headers)
     await message_broker_factory.idempotency_startup()
     await orm_factory.db.start()
-    # logger.info(log_names.info.started, 'group handler')
+    logger.info(log_names.info.started, 'group handler')
 
 
 async def shutdown() -> None:

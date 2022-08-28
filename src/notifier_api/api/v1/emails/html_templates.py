@@ -1,18 +1,16 @@
-"""Модуль содержит CRUD для работы с шаблонами email сообщений"""
-from fastapi import Response
+"""Модуль содержит CRUD для работы с шаблонами email сообщений."""
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, Header, HTTPException
-from sqlalchemy import delete, update, func, and_, select
+from fastapi import APIRouter, Depends, Header
+from fastapi import Response
+from sqlalchemy import update, func, and_, select
 from sqlalchemy.dialects.postgresql import insert
 
 from db.models.email_templates import HTMLTemplates
-from db.storage.orm_factory import get_db, AsyncPGClient
 from notifier_api.models.http_responses import http  # type: ignore
-from notifier_api.models.notifier_html_template import HtmlTemplatesResponse, HtmlTemplatesRequest, HtmlTemplatesQuery, \
-    HtmlTemplatesResponseSelected, HtmlTemplateSelected
+from notifier_api.models.notifier_html_template import HtmlTemplatesResponse, HtmlTemplatesRequest,\
+    HtmlTemplatesQuery, HtmlTemplatesResponseSelected, HtmlTemplateSelected
 from notifier_api.services.emails_factory import get_emails_factory, EmailsFactory
-from utils.custom_exceptions import DataBaseError
 from utils.custom_fastapi_router import LoggedRoute
 from utils.dependencies import requests_per_minute
 
@@ -34,9 +32,19 @@ router = APIRouter(
 async def new_template(
     template: HtmlTemplatesRequest,
     factory: EmailsFactory = Depends(get_emails_factory),
-    idempotency_key: UUID = Header(description='UUID4'),  # noqa: B008
+    idempotency_key: UUID = Header(description='UUID4'),
 ) -> HtmlTemplatesResponse:
+    """
+    Метод создаёт новый шаблон.
 
+    Args:
+        template: данные для шаблона
+        factory: обработчик
+        idempotency_key: ключ идемпотентности
+
+    Returns:
+        Сообщение об изменении сообщения или об ошибке.
+    """
     query_data = HtmlTemplatesQuery(**template.dict())
     query_data.id = idempotency_key
 
@@ -64,7 +72,17 @@ async def delete_template(
     response: Response,
     factory: EmailsFactory = Depends(get_emails_factory),
 ) -> HtmlTemplatesResponse:
+    """
+    Ручка удаляет шаблон по его id.
 
+    Args:
+        template_id: id шаблона
+        response: класс Response нужен для изменения статус кода при ошибке
+        factory: обработчик
+
+    Returns:
+        Сообщение об изменении сообщения или об ошибке.
+    """
     query_data = HtmlTemplatesQuery(id=template_id)
 
     query = update(HTMLTemplates)
@@ -96,7 +114,17 @@ async def get_template(
     response: Response,
     factory: EmailsFactory = Depends(get_emails_factory),
 ) -> HtmlTemplatesResponse:
+    """
+    Ручка достаёт шаблон по его id.
 
+    Args:
+        template_id: id шаблона
+        response: класс Response нужен для изменения статус кода при ошибке
+        factory: обработчик
+
+    Returns:
+        Вернёт шаблон или ошибку.
+    """
     query_data = HtmlTemplatesQuery(id=template_id)
 
     query = select(
@@ -129,7 +157,16 @@ async def get_all_templates(
     response: Response,
     factory: EmailsFactory = Depends(get_emails_factory),
 ) -> HtmlTemplatesResponse:
+    """
+    Ручка достаёт все шаблоны.
 
+    Args:
+        response: класс Response нужен для изменения статус кода при ошибке
+        factory: обработчик
+
+    Returns:
+        Вернёт все шаблоны или ошибку.
+    """
     query_data = HtmlTemplatesQuery()
 
     query = select(

@@ -78,7 +78,7 @@ class DBService:  # noqa: WPS214
         if result:
             row, = result
             logger.info(log_names.info.success_get, template_id, 'html_templates table')
-            return row.template
+            return row.template  # type: ignore
 
         logger.error(log_names.error.failed_get, template_id, 'html_templates table')
         return None
