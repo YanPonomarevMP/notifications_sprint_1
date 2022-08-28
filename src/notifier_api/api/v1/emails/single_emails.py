@@ -164,39 +164,3 @@ async def get_email(
     query_data.msg, query_data.emails_selected = await factory.select(query, response, SingleEmailsSelected)
 
     return query_data
-
-
-@router.get(
-    path='/',
-    status_code=http.ok.code,
-    response_model=SingleEmailsResponseSelected,
-    summary='Get all emails',
-    description='Endpoint returns all emails data from database',
-    response_description='emails data',
-    dependencies=[Depends(requests_per_minute(3))]
-)
-async def get_all_emails(
-    response: Response,
-    factory: EmailsFactory = Depends(get_emails_factory),
-) -> SingleEmailsResponse:
-
-    query_data = SingleEmailsQuery()
-
-    query = select(
-        SingleEmails.id,
-        SingleEmails.source,
-        SingleEmails.destination_id,
-        SingleEmails.template_id,
-        SingleEmails.subject,
-        SingleEmails.message,
-        SingleEmails.delay
-    )
-    query = query.filter(
-        and_(
-            SingleEmails.deleted_at == None  # noqa: E711
-        )
-    )
-
-    query_data.msg, query_data.emails_selected = await factory.select(query, response, SingleEmailsSelected)
-
-    return query_data
