@@ -91,7 +91,7 @@ class SingleEmailsSelected(BaseOrjson):
         Returns:
             Вернёт байт строку.
         """
-        return orjson.loads(filed_value)
+        return orjson.loads(filed_value)  # type: ignore
 
 
 class SingleEmailsResponseSelected(BaseOrjson):

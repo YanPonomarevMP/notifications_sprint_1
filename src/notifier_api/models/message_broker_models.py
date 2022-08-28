@@ -4,7 +4,7 @@ from uuid import UUID
 import orjson
 from pydantic import validator
 
-from notifier_api.models.base_orjson import BaseOrjson
+from notifier_api.models.base_orjson import BaseOrjson  # type: ignore
 
 
 class MessageBrokerData(BaseOrjson):

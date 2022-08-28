@@ -72,7 +72,7 @@ def timeout_limiter(
             """
 
             nonlocal start_sleep_time  # Переменная точно не глобальная, но и не локальная вроде :)
-            execution_time = 0
+            execution_time: float = 0
 
             while True:
                 try:
