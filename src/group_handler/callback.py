@@ -75,6 +75,8 @@ async def callback(message: AbstractIncomingMessage) -> None:  # noqa: WPS231,WP
                 )
                 return await message.reject()
 
+        return await message.ack()
+
     except Exception as error:
         # Если не смогли завершить транзакцию, снимаем блокировку и реджектим сообщение.
         logger.warning(log_names.warn.retrying, message_data.notification_id, error, message_data.x_request_id)

@@ -1,6 +1,6 @@
 """Модуль содержит фикстуры для pytest."""
 import asyncio
-from typing import Optional, Callable, Generator
+from typing import Optional, Callable, Generator, AsyncGenerator
 
 import aiohttp
 import pytest
@@ -21,7 +21,7 @@ def event_loop() -> Generator:
 
 
 @pytest.fixture(scope='session')
-async def session() -> Generator:
+async def session() -> AsyncGenerator:
     """
     Фикстура возвращает методы aiohttp сессии в виде словаря.
 

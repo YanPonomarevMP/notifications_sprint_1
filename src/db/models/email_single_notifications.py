@@ -1,15 +1,16 @@
-"""
-Модуль содержит таблицу одиночных email.
-"""
+"""Модуль содержит таблицу одиночных email."""
 from uuid import uuid4
 
 from sqlalchemy import Column, Integer, DateTime, func, Text
-from sqlalchemy.dialects.postgresql import UUID, JSON, JSONB
+from sqlalchemy.dialects.postgresql import UUID, JSONB
 
 from db.db_init import Base
 
 
-class SingleEmails(Base):
+class SingleEmails(Base):  # type: ignore
+
+    """Таблица SingleEmails."""
+
     __tablename__ = 'single_emails'
     __table_args__ = {'schema': 'email'}
 

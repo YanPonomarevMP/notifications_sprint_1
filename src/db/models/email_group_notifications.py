@@ -1,15 +1,16 @@
-"""
-Модуль содержит таблицу групповых email.
-"""
+"""Модуль содержит таблицу групповых email."""
 from uuid import uuid4
 
 from sqlalchemy import Column, Integer, DateTime, func, Text
-from sqlalchemy.dialects.postgresql import UUID, JSON, BOOLEAN, JSONB
+from sqlalchemy.dialects.postgresql import UUID, BOOLEAN, JSONB
 
 from db.db_init import Base
 
 
-class GroupEmails(Base):
+class GroupEmails(Base):  # type: ignore
+
+    """Таблица GroupEmails."""
+
     __tablename__ = 'group_emails'
     __table_args__ = {'schema': 'email'}
 

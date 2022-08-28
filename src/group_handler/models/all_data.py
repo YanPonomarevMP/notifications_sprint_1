@@ -2,7 +2,7 @@
 from typing import List, Optional
 from uuid import UUID
 
-from group_handler.models.base_config import BaseConfigModel
+from group_handler.models.base_config import BaseConfigModel  # type: ignore
 from group_handler.models.data_single_emails import DataSingleEmails
 
 

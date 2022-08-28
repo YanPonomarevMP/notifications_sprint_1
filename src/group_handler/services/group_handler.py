@@ -31,35 +31,14 @@ class GroupHandler:
             for user in await auth_service.get_by_group(raw_data.destination_id, x_request_id):
                 row_single_emails = DataSingleEmails(**raw_data.dict())
                 row_single_emails.id = uuid4()
-                row_single_emails.destination_id = user.user_id
-                row_single_emails.group_id = notification_id
+                row_single_emails.destination_id = user.user_id  # type: ignore
+                row_single_emails.group_id = notification_id  # type: ignore
 
                 if raw_data.send_with_gmt:  # В противном случае отправлять немедленно.
-                    row_single_emails.delay = self._create_delay(hours=user.hours, minutes=user.minutes)
+                    row_single_emails.delay = self._create_delay(hours=user.hours, minutes=user.minutes)  # type: ignore
 
                 result.users.append(row_single_emails)
         return FinalData(**result.dict())
-
-    def _create_delay(self, hours: int, minutes: int) -> int:
-        """
-        Метод высчитывает задержку исходя из timezone пользователя, приходящую из Auth.
-
-        Args:
-            hours: кол-во часов
-            minutes: колв-о минут
-
-        Returns:
-            Вернёт задержку.
-        """
-        seconds_in_day = 24 * 60 * 60
-        seconds_in_hours = abs(hours) * 60 * 60
-        seconds_in_minutes = minutes * 60
-
-        total_seconds = seconds_in_hours + seconds_in_minutes
-
-        if hours > 0:
-            return seconds_in_day - total_seconds
-        return total_seconds
 
     async def lock(self, notification_id: Union[UUID, str]) -> bool:
         """
@@ -91,6 +70,27 @@ class GroupHandler:
             users: пачка данных для вставки
         """
         await db_service.insert_to_single_emails(users)
+
+    def _create_delay(self, hours: int, minutes: int) -> int:
+        """
+        Метод высчитывает задержку исходя из timezone пользователя, приходящую из Auth.
+
+        Args:
+            hours: кол-во часов
+            minutes: колв-о минут
+
+        Returns:
+            Вернёт задержку.
+        """
+        seconds_in_day = 24 * 60 * 60
+        seconds_in_hours = abs(hours) * 60 * 60
+        seconds_in_minutes = minutes * 60
+
+        total_seconds = seconds_in_hours + seconds_in_minutes
+
+        if hours > 0:
+            return seconds_in_day - total_seconds
+        return total_seconds
 
 
 logger = logging.getLogger('group_handler')

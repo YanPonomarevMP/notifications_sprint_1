@@ -1,4 +1,8 @@
 from abc import ABC, abstractmethod
+from typing import Union, Optional, List
+
+from databases.interfaces import Record
+from sqlalchemy.sql import Update, Select, Insert, Delete
 
 
 class AbstractDBClient(ABC):
@@ -15,6 +19,6 @@ class AbstractDBClient(ABC):
         pass
 
     @abstractmethod
-    async def execute(self, query) -> None:
+    async def execute(self, query: Union[Update, Select, Insert, Delete]) -> Optional[List[Record]]:
         """Метод выполняет запрос в БД."""
         pass
