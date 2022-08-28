@@ -34,7 +34,7 @@ jobs:
     Telegram:
         name: Telegram message
         runs-on: ubuntu-latest
-#        needs: linter
+        needs: linter
         steps:
             -   name: send telegram message
                 uses: appleboy/telegram-action@master
