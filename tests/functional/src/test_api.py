@@ -3,32 +3,34 @@ from typing import Callable
 
 import pytest
 
-from tests.functional.settings import settings
+from tests.functional.testdata.scenarios import scenarios
+
 
 # Единый декоратор для всех асинхронных тестов (https://github.com/pytest-dev/pytest-asyncio#pytestmarkasyncio)
 pytestmark = pytest.mark.asyncio
 
 
-async def test_api_events_post(
-    make_request_post: Callable,
-    authorization: str,
-    x_request_id: str
-) -> None:
+async def test_api_scenarios(make_get_request: Callable) -> None:
+    """
+    Функция тестирует API приложения по сценарию запросов
+    Args:
+        make_get_request: фикстура выполняющая HTTP запрос
+    """
 
-    headers = {'X-Request-Id': x_request_id, 'Authorization': authorization}
-    body = {"topic": "views", "key": "film1+user1", "value": "value_1"}
-    handle = settings.ugc_api.handle_events_post
+    # Выполнение запросов по сценарию
+    for query in scenarios:
+        response = await make_get_request(
+            method=query.method,
+            handle=query.url,
+            headers=query.headers,
+            params=query.params,
+            body=query.body
+        )
+        assert response.status == query.expected_status
+        if query.check_body:
+            assert response.body == query.expected_body
+        if query.check_len_body:
+            assert len(response.body) == len(query.expected_body)
+        if query.check_len_str_body:
+            assert len(str(response.body)) == len(str(query.expected_body))
 
-    # Пробуем выполнить корректный запрос.
-    response = await make_request_post(handle=handle, headers=headers, body=body)
-    assert response.status == 200
-
-    # Пробуем выполнить запрос без Authorization (access токен)
-    del headers['Authorization']
-    response = await make_request_post(handle=handle, headers=headers, body=body)
-    assert response.status == 400
-
-    # Пробуем выполнить запрос без X-Request-Id.
-    del headers['X-Request-Id']
-    response = await make_request_post(handle=handle, headers=headers, body=body)
-    assert response.status == 400
