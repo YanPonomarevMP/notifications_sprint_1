@@ -51,3 +51,5 @@ vault kv put notifications/smtp_port value=465
 vault kv put notifications/smtp_login value=***
 vault kv put notifications/smtp_password value=***
 vault kv put notifications/smtp_email_address value=***
+
+vault kv put notifications/url_get_by_group value=/v1/back/by_group

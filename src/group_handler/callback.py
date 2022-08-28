@@ -41,6 +41,7 @@ async def callback(message: AbstractIncomingMessage) -> None:  # noqa: WPS231,WP
     )
 
     if message_data.count_retry > config.rabbit_mq.max_retry_count:
+        print('count_retry')
         # logger.info(log_names.error.drop_message, 'Too many repeat inserts in the queue', message_data.x_request_id)
         return await message.ack()
 
@@ -48,8 +49,20 @@ async def callback(message: AbstractIncomingMessage) -> None:  # noqa: WPS231,WP
 
     # Если не удалось заблокировать, значит уже обработано (или удалено).
     if not locked:
+        print('locked or deleted')
         # logger.info(log_names.error.drop_message, 'Message has being processed or deleted', message_data.x_request_id)
         return await message.ack()
+
+    # Начало транзакции.
+    try:
+        notification_data = await group_handler_service.get_data(
+            notification_id=message_data.notification_id,
+            x_request_id=message_data.x_request_id
+        )
+        print()
+
+    except Exception as e:
+        print(e)
 
 
 logger = logging.getLogger('group_handler')

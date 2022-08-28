@@ -3,14 +3,15 @@
 Уже высокоуровневая бизнес логика.
 """
 import logging
-from typing import Union
+from typing import Union, Optional
 from uuid import UUID
 
-from sqlalchemy import and_, update, func
+from sqlalchemy import and_, update, func, select
 
 from db.models.email_group_notifications import GroupEmails
 from db.storage.abstract_classes import AbstractDBClient
 from db.storage.orm_factory import db
+from group_handler.models.raw_data_db import RawDataDB
 
 
 class DBService:  # noqa: WPS214
@@ -26,39 +27,39 @@ class DBService:  # noqa: WPS214
         """
         self.db = database
 
-    # async def get_raw_data_by_id(self, notification_id: Union[UUID, str]) -> Optional[RawDataDB]:
-    #     """
-    #     Метод достаёт «сырые» данные по notification_id.
-    #
-    #     Args:
-    #         notification_id: id сообщения
-    #
-    #     Returns:
-    #         Вернёт pydantic модель RawDataModel.
-    #     """
-    #     query = select(
-    #         GroupEmails.source,
-    #         GroupEmails.destination_id,
-    #         GroupEmails.template_id,
-    #         GroupEmails.subject,
-    #         GroupEmails.message,
-    #         GroupEmails.delay,
-    #         GroupEmails.send_with_gmt
-    #     ).filter(
-    #         and_(
-    #             GroupEmails.deleted_at == None,  # noqa: E711
-    #             GroupEmails.id == notification_id
-    #         )
-    #     )
-    #     result = await self.db.execute(query)
-    #
-    #     if result:
-    #         row, = result
-    #         # logger.info(log_names.info.success_get, notification_id, 'single_emails table')
-    #         return RawDataDB(**row._mapping)  # noqa: WPS437
-    #
-    #     # logger.error(log_names.error.failed_get, notification_id, 'single_emails table')
-    #     return None
+    async def get_raw_data_by_id(self, notification_id: Union[UUID, str]) -> Optional[RawDataDB]:
+        """
+        Метод достаёт «сырые» данные по notification_id.
+
+        Args:
+            notification_id: id сообщения
+
+        Returns:
+            Вернёт pydantic модель RawDataModel.
+        """
+        query = select(
+            GroupEmails.source,
+            GroupEmails.destination_id,
+            GroupEmails.template_id,
+            GroupEmails.subject,
+            GroupEmails.message,
+            GroupEmails.delay,
+            GroupEmails.send_with_gmt
+        ).filter(
+            and_(
+                GroupEmails.deleted_at == None,  # noqa: E711
+                GroupEmails.id == notification_id
+            )
+        )
+        result = await self.db.execute(query)
+
+        if result:
+            row, = result
+            # logger.info(log_names.info.success_get, notification_id, 'single_emails table')
+            return RawDataDB(**row._mapping)  # noqa: WPS437
+
+        # logger.error(log_names.error.failed_get, notification_id, 'single_emails table')
+        return None
 
     # async def get_template_by_id(self, template_id: Union[UUID, str]) -> Optional[str]:
     #     """

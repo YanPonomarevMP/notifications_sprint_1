@@ -15,7 +15,6 @@ class RawDataDB(BaseConfigModel):
     template_id: UUID
     destination_id: UUID
     message: Union[dict, str]
-    group_id: Optional[UUID]
     source: str
     subject: str
     delay: int
