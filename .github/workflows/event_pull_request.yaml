@@ -2,9 +2,8 @@
 name: pull request event
 
 on:
-#    pull_request:
-#        branches: [ main ]
-    push:
+    pull_request:
+        branches: [ main ]
 
 jobs:
     linter:
@@ -14,7 +13,6 @@ jobs:
                 python-version: [ '3.8', '3.9' ]
         name: linters with python ${{ matrix.python-version }}  # Удобно же видеть какая сейчас версия.
         steps:
-#            - id: linters
             -   uses: actions/checkout@v2
             -   name: Install Python
                 uses: actions/setup-python@v2
@@ -47,7 +45,7 @@ jobs:
                     message: |
                         Repository: ${{ github.repository }}
                         
-                        Linters passed: ${{ steps.Flake8.outcome }}
+                        Linters passed: ${{ steps.linters.outcome }}
                         
                         Pull request message: ${{ github.event.pull_request[0].message }}
                         See changes: https://github.com/${{ github.repository }}/pull/${{github.event.pull_request.head.sha}}
