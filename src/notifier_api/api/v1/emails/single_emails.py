@@ -38,7 +38,7 @@ async def new_email(
     x_request_id: str = Header(),  # noqa: WPS204
 ) -> SingleEmailsResponse:
     """
-    Ручка создаёт новую почту.
+    Ручка создаёт новое письмо.
 
     Args:
         single_email: данные
@@ -84,10 +84,10 @@ async def update_email(
     factory: EmailsFactory = Depends(get_emails_factory),
 ) -> SingleEmailsResponse:
     """
-    Ручка обновляет почту.
+    Ручка обновляет письмо.
 
     Args:
-        single_email: данные почты
+        single_email: данные письма
         response: класс Response нужен для изменения статус кода при ошибке
         factory: обработчик запроса
 
@@ -127,10 +127,10 @@ async def delete_email(
     factory: EmailsFactory = Depends(get_emails_factory),
 ) -> SingleEmailsResponse:
     """
-    Ручка удаляет почту по Id.
+    Ручка удаляет письмо по Id.
 
     Args:
-        email_id: id почты
+        email_id: id письма
         response: класс Response нужен для изменения статус кода при ошибке
         factory: обработчик
 
@@ -170,10 +170,10 @@ async def get_email(
     factory: EmailsFactory = Depends(get_emails_factory),
 ) -> SingleEmailsResponse:
     """
-    Ручка достаёт почту по id.
+    Ручка достаёт письмо по id.
 
     Args:
-        email_id: id почты
+        email_id: id письма
         response: класс Response нужен для изменения статус кода при ошибке
         factory:обработчик
 
