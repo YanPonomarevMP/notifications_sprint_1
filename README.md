@@ -1,6 +1,6 @@
 # Code Review № 1
 
-https://github.com/YanPonomarevMP/notifications_sprint_1/pull/66
+[ссылка на репозиторий с pull request](https://github.com/YanPonomarevMP/notifications_sprint_1/pull/66)
 
 # Проектная работа 10 спринта
 
