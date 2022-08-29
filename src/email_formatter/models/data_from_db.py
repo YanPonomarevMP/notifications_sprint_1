@@ -14,20 +14,7 @@ class RawDataDB(BaseConfigModel):
 
     template_id: UUID
     destination_id: UUID
-    message: Union[dict, str]
+    message: dict
     group_id: Optional[UUID]
     source: str
     subject: str
-
-    @validator('message')
-    def json_to_dict(cls, message: str) -> dict:
-        """
-        Метод преобразует JSON в dict.
-
-        Args:
-            message: JSON с данными
-
-        Returns:
-            Вернёт словарь.
-        """
-        return orjson.loads(message)
