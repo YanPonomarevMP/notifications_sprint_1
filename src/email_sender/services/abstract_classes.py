@@ -1,23 +1,15 @@
-"""
-Модуль содержит интерфейс для работы с сервисом отправки email уведомлений.
-В его обязанности входит получать письмо и отправлять его в SMTP сервер.
-"""
-import logging
+"""Модуль содержит абстрактнее классы."""
+from abc import ABC
 from email.message import EmailMessage
 from typing import Union
 from uuid import UUID
 
-import aiosmtplib
-
-from config.settings import config
-from email_sender.models.message_data import MessageData
-from email_sender.services.abstract_classes import AbstractSenderService
-from email_sender.services.pg import db_service
+from group_handler.models.message_data import MessageData
 
 
-class EmailSenderService(AbstractSenderService):
+class AbstractSenderService(ABC):
 
-    """Класс с интерфейсом email_sender."""
+    """Абстрактный класс с интерфейсом Sender Service."""
 
     def create_notification(self, message_data: MessageData) -> EmailMessage:
         """
@@ -29,14 +21,7 @@ class EmailSenderService(AbstractSenderService):
         Returns:
             Вернёт EmailMessage объект.
         """
-        notification = EmailMessage()
-        notification['From'] = config.smtp.email_address
-        notification['To'] = ','.join([message_data.to])  # type: ignore
-        notification['Subject'] = message_data.subject
-        notification['Reply-to'] = message_data.reply_to
-        content = message_data.html
-        notification.add_alternative(content, subtype='html')
-        return notification
+        pass
 
     async def post_notification(self, notification: EmailMessage) -> str:
         """
@@ -48,15 +33,7 @@ class EmailSenderService(AbstractSenderService):
         Returns:
             Вернёт ответ сервера.
         """
-        response = await aiosmtplib.send(
-            notification,
-            hostname=config.smtp.host,
-            port=config.smtp.port,
-            username=config.smtp.login.get_secret_value(),
-            password=config.smtp.password.get_secret_value(),
-            use_tls=True
-        )
-        return response[1]
+        pass
 
     async def lock(self, notification_id: Union[UUID, str]) -> bool:
         """
@@ -69,7 +46,7 @@ class EmailSenderService(AbstractSenderService):
             Вернёт ответ на вопрос удалось ли проставить отметку.
             Если нет — значит кто-то до нас её уже проставил, а значит это сообщение уже не наше дело.
         """
-        return await db_service.mark_as_sent_at(notification_id=notification_id)
+        pass
 
     async def unlock(self, notification_id: Union[UUID, str]) -> None:
         """
@@ -78,7 +55,7 @@ class EmailSenderService(AbstractSenderService):
         Args:
             notification_id: id сообщения
         """
-        await db_service.unmark_as_sent_at(notification_id=notification_id)
+        pass
 
     async def post_response(self, notification_id: Union[UUID, str], response: str) -> None:
         """
@@ -88,8 +65,4 @@ class EmailSenderService(AbstractSenderService):
             notification_id: id сообщения
             response: ответ сервера
         """
-        await db_service.mark_as_sent_result(notification_id=notification_id, result=response)
-
-
-logger = logging.getLogger('email_sender')
-sender_service = EmailSenderService()
+        pass
