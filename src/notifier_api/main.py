@@ -7,7 +7,7 @@ from fastapi.responses import ORJSONResponse
 from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor  # type: ignore
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
-from api.v1.emails.main import router as v1_emails_router
+from api.v1.emails.routes import router as v1_emails_router
 from config.logging_settings import LOGGING
 from config.settings import config
 from utils.custom_exceptions_handlers import validation_exception_handler, http_exception_handler
