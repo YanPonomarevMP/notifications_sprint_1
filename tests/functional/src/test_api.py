@@ -10,7 +10,7 @@ from tests.functional.testdata.scenarios import scenarios
 pytestmark = pytest.mark.asyncio
 
 
-async def test_api_scenarios(make_get_request: Callable) -> None:
+async def test_api_scenarios(make_request) -> None:
     """
     Функция тестирует API приложения по сценарию запросов
     Args:
@@ -19,7 +19,7 @@ async def test_api_scenarios(make_get_request: Callable) -> None:
 
     # Выполнение запросов по сценарию
     for query in scenarios:
-        response = await make_get_request(
+        response = await make_request(
             method=query.method,
             handle=query.url,
             headers=query.headers,

@@ -38,7 +38,7 @@ async def session() -> AsyncGenerator:
 
 
 @pytest.fixture
-def make_get_request(session: dict) -> Callable:
+def make_request(session: dict) -> Callable:
     """
     Фикстура возвращает функцию для выполнения запросов к API.
     Args:
