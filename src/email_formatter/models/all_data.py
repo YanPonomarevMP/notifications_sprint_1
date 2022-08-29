@@ -11,7 +11,7 @@ class AuthData(BaseConfigModel):
 
     name: Optional[str]
     email: Optional[str]
-    groups: Optional[List[UUID]]
+    groups: Optional[list[UUID]]
 
 
 class NotificationData(BaseConfigModel):

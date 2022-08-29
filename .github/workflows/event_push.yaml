@@ -3,7 +3,7 @@ name: push event
 
 on:
     push:
-        branches: [ main ]
+#        branches: [ main ]
 
 jobs:
     linter:
