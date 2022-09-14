@@ -7,7 +7,7 @@ class AbstractAppConfig(ABC):
     """Класс для конфигурирования приложения из хранилища секретов."""
 
     @abstractmethod
-    def get_secret(self, key: str) -> str:  # noqa:WPS463
+    def get_setting(self, key: str) -> str:  # noqa:WPS463
         """
         Метод достаёт значение ключа из хранилища.
 
